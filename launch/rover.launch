@@ -1,0 +1,4 @@
+<launch>
+	<node name="xboxDriver" pkg="rover" type="xboxdrv.sh" />
+	<node name="roverControl" pkg="rover" type="rover.py" />
+</launch>
