@@ -1,5 +1,6 @@
 #!/usr/bin/python
 
+import RPi.GPIO as GPIO
 from motor import Motor
 import time
 
@@ -12,24 +13,24 @@ class MotorsDriver:
 		self._left.stop()
 		self._right.stop()
 
-	def move_forward(self):
+	def move_forward(self, duration):
 		self._left.move_forward()
 		self._right.move_forward()
+		time.sleep(duration)
 
-	def move_backward(self):
+	def move_backward(self, duration):
 		self._left.move_backward()
 		self._right.move_backward()
+		time.sleep(duration)
 
-	def turn_right(self):
-		print "turn right"
+	def turn_right(self, duration):
+		self._left.move_forward()
+		self._right.move_backward()
+		time.sleep(duration)
 
 if __name__ == "__main__":
 	m = MotorsDriver()
-	m.move_forward()
-	time.sleep(2)
+	m.turn_right(0.30)
 	m.stop()
-
-	m.move_backward()
-	time.sleep(2)
-	m.stop()
+	GPIO.cleanup()
 
