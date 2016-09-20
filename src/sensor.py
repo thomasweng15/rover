@@ -25,8 +25,13 @@ class Sensor:
 		GPIO.setup(ECHO, GPIO.IN)
 		GPIO.output(TRIG, False)
 
+		rospy.on_shutdown(self._shutdown_callback)
+
 		rospy.loginfo("Waiting for Sensor to Settle")
 		time.sleep(2)
+
+	def _shutdown_callback(self):
+		GPIO.cleanup()
 
 	def run(self):
 		while not rospy.is_shutdown():
@@ -49,21 +54,12 @@ class Sensor:
 				self.read_rate.sleep()
 
 			except KeyboardInterrupt:
-				self._cleanup()
-				sys.exit(1)
-
-			except Exception as e:
-				rospy.logerr(e)
-				self._cleanup()
-				sys.exit(1)
+				sys.exit(0)	
 
 	def _publish(self, distance):
 		data = { "distance" : distance }
 		data_json = json.dumps(data)
 		self._pub.publish(String(data_json))
-
-	def _cleanup(self):
-		GPIO.cleanup()
 
 if __name__ == '__main__':
 	s = Sensor()

@@ -6,6 +6,7 @@ import time
 
 class MotorsDriver:
 	def __init__(self):
+		GPIO.setmode(GPIO.BCM)
 		self._left = Motor(5, 6)
 		self._right = Motor(27, 22)
 
@@ -27,7 +28,7 @@ class MotorsDriver:
 		self._left.move_forward()
 		self._right.move_backward()
 		time.sleep(duration)
-
+	
 if __name__ == "__main__":
 	m = MotorsDriver()
 	m.turn_right(0.30)

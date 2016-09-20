@@ -22,4 +22,3 @@ class Motor:
 	def stop(self):
 		GPIO.output(self.pin_1, False)
 		GPIO.output(self.pin_2, False)
-
