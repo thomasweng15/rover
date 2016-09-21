@@ -27,8 +27,9 @@ class Ultrasonic:
 
 		rospy.on_shutdown(self._shutdown_callback)
 
-		rospy.loginfo("Waiting for Sensor to Settle")
+		rospy.loginfo("Waiting for ultrasonic sensor to settle...")
 		time.sleep(2)
+		rospy.loginfo("...done")
 
 	def _shutdown_callback(self):
 		GPIO.cleanup()

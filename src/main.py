@@ -2,22 +2,21 @@
 
 from std_msgs.msg import String
 from motors_driver import MotorsDriver
-import RPi.GPIO as GPIO
 import json
 import rospy
-import time
 
+RATE = 0.2
 DISTANCE_THRESHOLD = 10
 
 class Controller:
 	def __init__(self, dist_threshold):
 		rospy.init_node("rvr_controller")
-		GPIO.setmode(GPIO.BCM)
 		self._mode = "manual" 
-		self._init_subs()
 		self._dist_threshold = dist_threshold
-		self._motors = MotorsDriver()
-		rospy.on_shutdown(self._shutdown_callback)
+		self._is_avoiding_collision = False
+		
+		self._init_subs()
+		self._pub = rospy.Publisher("rvr_motors", String)
 
 	def _init_subs(self):
 		self._control_sub = rospy.Subscriber(
@@ -45,27 +44,46 @@ class Controller:
 		data = json.loads(msg.data)
 		distance = data["distance"]
 		if distance < self._dist_threshold:
-			rospy.logerr("close: " + str(distance))
-			self._motors.stop()
-			rospy.loginfo("backward")
-			self._motors.move_backward(0.3)
-			time.sleep(0.3)
-			self._motors.stop()
-			self._motors.turn_right(0.3)
-			time.sleep(0.3)
-			self._motors.stop()
+			rospy.logwarn("Detect close object: " + str(distance))
+			self._start_collision_avoidance()
 
-	def _shutdown_callback(self):
-		self._motors.stop()
-		GPIO.cleanup()
+	def _publish_direction(self, direction, duration):
+		data = { 
+			"direction" : direction,
+			"duration" : duration 
+		}
+		data_json = json.dumps(data)
+		self._pub.publish(String(data_json))
+
+	def _start_collision_avoidance(self):
+		self._is_avoiding_collision = True 
+
+	def _stop_collision_avoidance(self, event):
+		self._is_avoiding_collision = False
+
+	def run_auto(self):
+		if self._is_avoiding_collision:
+			rospy.loginfo("Move backward for %s", RATE * 2)
+			self._publish_direction("backward", RATE * 2)
+			rospy.sleep(RATE * 2)
+
+			rospy.loginfo("Turn right for %s", RATE * 1.5)
+			self._publish_direction("right", RATE * 1.5)
+			
+			rospy.Timer(rospy.Duration(RATE * 1.5), self._stop_collision_avoidance)
+			rospy.sleep(RATE * 1.5)
+		else:
+			rospy.loginfo("Move forward for %s", RATE)
+			self._publish_direction("forward", RATE)
+
+			rospy.sleep(RATE)
 
 	def run(self):
 		while not rospy.is_shutdown():
 			if self._mode == "auto":
-				rospy.loginfo("forward")
-				self._motors.move_forward(0.3)
-			
-			time.sleep(0.3)
+				self.run_auto()
+			else:
+				rospy.sleep(RATE)			
 
 if __name__ == '__main__':
 	rover = Controller(DISTANCE_THRESHOLD)
