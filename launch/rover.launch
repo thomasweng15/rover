@@ -1,4 +1,4 @@
 <launch>
-	<node name="main" pkg="rover" type="main.py" />
-	<node name="sensor" pkg="rover" type="sensor.py" />
+	<node name="main" pkg="rover" type="main.py" output="screen" />
+	<node name="ultrasonic" pkg="rover" type="ultrasonic.py" output="screen" />
 </launch>

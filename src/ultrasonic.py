@@ -12,7 +12,7 @@ ECHO = 24
 READ_RATE = 10
 PULSE_RATE = 10000
 
-class Sensor:
+class Ultrasonic:
 	def __init__(self):
 		rospy.init_node("rvr_ultrasonic", disable_signals=True)	
 		self._pub = rospy.Publisher("rvr_ultrasonic", String)
@@ -62,5 +62,5 @@ class Sensor:
 		self._pub.publish(String(data_json))
 
 if __name__ == '__main__':
-	s = Sensor()
+	s = Ultrasonic()
 	s.run()
