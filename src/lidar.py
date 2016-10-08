@@ -16,7 +16,8 @@ class Lidar:
 	def __init__(self, com_port, baudrate):
 		rospy.init_node("rvr_lidar")
 
-		self.data = [[] for i in range(360)]
+		self.lidarData = [[] for i in range(360)]
+		self.speed_rpm = 0
 		self.init_level = 0
 		self.index = 0
 		self.serial = serial.Serial(com_port, baudrate)		
@@ -44,8 +45,19 @@ class Lidar:
 		return int(checksum)		
 
 	def compute_speed(self, data):
-		speed_rpm = float(data[0] | (data[1] << 8)) / 64.0
-		return speed_rpm
+		self.speed_rpm = float(data[0] | (data[1] << 8)) / 64.0
+
+	def update_position(self, angle, data):
+		# unpack data
+		x0 = data[0]
+		x1 = data[1]
+		x2 = data[2]
+		x3 = data[3]
+
+		dist_mm = x0 | ((x1 & 0x3f) << 8) # distance is coded on 13 bits ? 14 bits ?
+		quality = x2 | (x3 << 8) # quality is on 16 bits
+		self.lidarData[angle] = [dist_mm, quality]
+		rospy.loginfo(self.lidarData)
 
 	def run(self):
 		while not rospy.is_shutdown():
@@ -87,10 +99,20 @@ class Lidar:
 
 					# verify that the received checksum is equal to the one computed from the data
 					if self.checksum(all_data) == incoming_checksum:
-						speed_rpm = self.compute_speed(b_speed)
-						rospy.loginfo(speed_rpm)
+						self.compute_speed(b_speed)
+
+						self.update_position(self.index * 4 + 0, b_data0)
+						self.update_position(self.index * 4 + 1, b_data1)
+						self.update_position(self.index * 4 + 2, b_data2)
+						self.update_position(self.index * 4 + 3, b_data3)
 					else:
 						rospy.logwarn("checksum mismatch")
+
+						null_data = [0, 0x80, 0, 0]
+						self.update_position(self.index * 4 + 0, null_data)
+						self.update_position(self.index * 4 + 1, null_data)
+						self.update_position(self.index * 4 + 2, null_data)
+						self.update_position(self.index * 4 + 3, null_data)
 
 					self.init_level = 0
 			except Exception as e: 
