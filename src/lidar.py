@@ -2,8 +2,8 @@
 #based on code from Nicolas "Xevel" Saugnier
 #requires pyserial
 
-from rover.msg import LidarArray
 from rover.msg import LidarPoint
+from lidar_viz import LidarViz
 import rospy
 import serial
 
@@ -14,13 +14,14 @@ class Lidar:
 	def __init__(self, com_port, baudrate):
 		rospy.init_node("rvr_lidar")
 
-		self.pub = rospy.Publisher("/lidar", LidarArray)
+		self.pub = rospy.Publisher("/lidar", LidarPoint)
 
 		self.lidarData = [LidarPoint() for i in range(360)]
-		self.speed_rpm = 0
 		self.init_level = 0
 		self.index = 0
 		self.serial = serial.Serial(com_port, baudrate)		
+
+		self.viz = LidarViz(8000)
 
 	def checksum(self, data):
 		"""
@@ -45,7 +46,7 @@ class Lidar:
 		return int(checksum)		
 
 	def compute_speed(self, data):
-		self.speed_rpm = float(data[0] | (data[1] << 8)) / 64.0
+		return float(data[0] | (data[1] << 8)) / 64.0
 
 	def update_position(self, angle, data):
 		# unpack data
@@ -58,12 +59,20 @@ class Lidar:
 		quality = x2 | (x3 << 8) # quality is on 16 bits
 		self.lidarData[angle].dist_mm = dist_mm
 		self.lidarData[angle].quality = quality
-		rospy.loginfo(self.lidarData)
+
+		point = LidarPoint()
+		point.angle = angle
+		point.dist_mm = dist_mm
+		point.quality = quality
+
+		self.pub.publish(point)
+		self.viz.redraw(x1, angle, dist_mm, quality)
 
 	def run(self):
 		while not rospy.is_shutdown():
 			try: 
 				rospy.sleep(0.00001)
+				self.viz.checkKeys()
 
 				if self.init_level == 0:							
 					byte = ord(self.serial.read(1))
@@ -100,14 +109,13 @@ class Lidar:
 
 					# verify that the received checksum is equal to the one computed from the data
 					if self.checksum(all_data) == incoming_checksum:
-						self.compute_speed(b_speed)
-
+						speed_rpm = self.compute_speed(b_speed)
+						self.viz.update_speed(int(speed_rpm))
+				
 						self.update_position(self.index * 4 + 0, b_data0)
 						self.update_position(self.index * 4 + 1, b_data1)
 						self.update_position(self.index * 4 + 2, b_data2)
 						self.update_position(self.index * 4 + 3, b_data3)
-
-						self.pub.publish(LidarArray(self.lidarData))
 					else:
 						rospy.logwarn("checksum mismatch")
 
