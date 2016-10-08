@@ -1,12 +1,10 @@
 #Display Data from Neato LIDAR
 #based on code from Nicolas "Xevel" Saugnier
-#requires vpython and pyserial
+#requires pyserial
 
+from rover.msg import LidarArray
+from rover.msg import LidarPoint
 import rospy
-import thread 
-import sys
-import traceback
-import math
 import serial
 
 COM_PORT = "/dev/ttyACM0"
@@ -16,7 +14,9 @@ class Lidar:
 	def __init__(self, com_port, baudrate):
 		rospy.init_node("rvr_lidar")
 
-		self.lidarData = [[] for i in range(360)]
+		self.pub = rospy.Publisher("/lidar", LidarArray)
+
+		self.lidarData = [LidarPoint() for i in range(360)]
 		self.speed_rpm = 0
 		self.init_level = 0
 		self.index = 0
@@ -56,7 +56,8 @@ class Lidar:
 
 		dist_mm = x0 | ((x1 & 0x3f) << 8) # distance is coded on 13 bits ? 14 bits ?
 		quality = x2 | (x3 << 8) # quality is on 16 bits
-		self.lidarData[angle] = [dist_mm, quality]
+		self.lidarData[angle].dist_mm = dist_mm
+		self.lidarData[angle].quality = quality
 		rospy.loginfo(self.lidarData)
 
 	def run(self):
@@ -105,6 +106,8 @@ class Lidar:
 						self.update_position(self.index * 4 + 1, b_data1)
 						self.update_position(self.index * 4 + 2, b_data2)
 						self.update_position(self.index * 4 + 3, b_data3)
+
+						self.pub.publish(LidarArray(self.lidarData))
 					else:
 						rospy.logwarn("checksum mismatch")
 
