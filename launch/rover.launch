@@ -2,4 +2,5 @@
 	<node name="main" pkg="rover" type="main.py" output="screen" />
 	<node name="ultrasonic" pkg="rover" type="ultrasonic.py" output="screen" />
 	<node name="motors" pkg="rover" type="motors_driver.py" output="screen" />
+	<node name="lidar" pkg="rover" type="lidar.py" output="screen" />
 </launch>
