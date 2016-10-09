@@ -13,8 +13,8 @@ class MotorsDriver:
 		rospy.init_node("rvr_motors")
 
 		GPIO.setmode(GPIO.BCM)
-		self._left = Motor(5, 6)
-		self._right = Motor(27, 22)
+		self._left = Motor(5, 6, 26)
+		self._right = Motor(27, 22, 16)
 
 		self._sub = rospy.Subscriber(
 			"rvr_motors",
@@ -51,6 +51,14 @@ class MotorsDriver:
 	def stop(self):
 		self._left.stop()
 		self._right.stop()
+
+	def update_speed(self, percent):
+		if percent < 0 or percent > 90:
+			rospy.logwarn("speed percentage out of bounds: %s", str(percent) + "%")
+			return 
+
+		self._left.update_speed(percent)
+		self._right.update_speed(percent)
 
 	def move_forward(self):
 		self._left.move_forward()
