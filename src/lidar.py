@@ -1,3 +1,5 @@
+#!/usr/bin/python
+
 #Display Data from Neato LIDAR
 #based on code from Nicolas "Xevel" Saugnier
 #requires pyserial
@@ -6,12 +8,13 @@ from rover.msg import LidarPoint
 from lidar_viz import LidarViz
 import rospy
 import serial
+import sys
 
 COM_PORT = "/dev/ttyACM0"
 BAUDRATE = 115200
 
 class Lidar:
-	def __init__(self, com_port, baudrate):
+	def __init__(self, com_port, baudrate, hasViz):
 		rospy.init_node("rvr_lidar")
 
 		self.pub = rospy.Publisher("/lidar", LidarPoint)
@@ -20,8 +23,10 @@ class Lidar:
 		self.init_level = 0
 		self.index = 0
 		self.serial = serial.Serial(com_port, baudrate)		
-
-		self.viz = LidarViz(8000)
+		self.hasViz = hasViz
+		
+		if self.hasViz:
+			self.viz = LidarViz(8000)
 
 	def checksum(self, data):
 		"""
@@ -66,13 +71,17 @@ class Lidar:
 		point.quality = quality
 
 		self.pub.publish(point)
-		self.viz.redraw(x1, angle, dist_mm, quality)
+		
+		if self.hasViz:
+			self.viz.redraw(x1, angle, dist_mm, quality)
 
 	def run(self):
 		while not rospy.is_shutdown():
 			try: 
 				rospy.sleep(0.00001)
-				self.viz.checkKeys()
+				
+				if self.hasViz:
+					self.viz.checkKeys()
 
 				if self.init_level == 0:							
 					byte = ord(self.serial.read(1))
@@ -110,7 +119,9 @@ class Lidar:
 					# verify that the received checksum is equal to the one computed from the data
 					if self.checksum(all_data) == incoming_checksum:
 						speed_rpm = self.compute_speed(b_speed)
-						self.viz.update_speed(int(speed_rpm))
+					
+						if self.hasViz:
+							self.viz.update_speed(int(speed_rpm))
 				
 						self.update_position(self.index * 4 + 0, b_data0)
 						self.update_position(self.index * 4 + 1, b_data1)
@@ -130,5 +141,9 @@ class Lidar:
 				rospy.logerr(e)
 
 if __name__ == '__main__':
-	l = Lidar(COM_PORT, BAUDRATE)
+	hasViz = False
+	if len(sys.argv) > 1 and sys.argv[1] == "-v":
+		hasViz = True
+
+	l = Lidar(COM_PORT, BAUDRATE, False)
 	l.run()
