@@ -1,6 +1,7 @@
 #!/usr/bin/python
 
 from std_msgs.msg import String
+from rover.msg import XboxController 
 from motors_driver import MotorsDriver
 import json
 import rospy
@@ -30,6 +31,12 @@ class Controller:
 			String, 
 			self._ultrasonic_callback
 		)
+                
+		self._xbox_sub = rospy.Subscriber(
+			"xboxdrv", 
+			XboxController, 
+			self._xbox_callback
+		)
 
 	def _mode_callback(self, msg):
 		data = json.loads(msg.data)
@@ -46,6 +53,12 @@ class Controller:
 		if distance < self._dist_threshold:
 			rospy.logwarn("Detect close object: " + str(distance))
 			self._start_collision_avoidance()
+
+	def _xbox_callback(self, msg):
+		if self._mode == "auto":
+			return
+
+                rospy.loginfo("right: %i, left: %i", msg.RT, msg.LT)
 
 	def _publish_direction(self, direction, duration):
 		data = { 
