@@ -83,8 +83,7 @@ class Controller:
             return
 
         self._is_avoiding_collision = True 
-        rospy.logerr("Timer set")
-        rospy.Timer(rospy.Duration(3), self._stop_collision_avoidance, True)
+        rospy.Timer(rospy.Duration(1), self._stop_collision_avoidance, True)
 
     def _stop_collision_avoidance(self, event):
         self._is_avoiding_collision = False
@@ -95,7 +94,7 @@ class Controller:
             self._publish_motor_command(100, -25)
         else:
             rospy.loginfo("Move forward")
-            self._publish_motor_command(0, 40)
+            self._publish_motor_command(0, 30)
 
     def run(self):
         while not rospy.is_shutdown():

@@ -6,8 +6,6 @@ from motor import Motor
 import rospy
 import json
 
-DIRECTIONS = set(['stop', 'forward', 'backward', 'right', 'left'])
-
 class MotorsDriver:
     def __init__(self):
         rospy.init_node("rvr_motors")
@@ -49,33 +47,6 @@ class MotorsDriver:
         self._left.update(left_power, is_forward)
         self._right.update(right_power, is_forward)
 
-    def _motors_callbackq(self, msg):
-        data = json.loads(msg.data)
-        rospy.loginfo(data)
-        
-        speed = data["percent"]
-        if speed is not None:
-            self.update_speed(speed)
-            
-        direction = data["direction"]
-        assert direction in DIRECTIONS
-        
-        if direction == "stop":
-            self.stop()
-        elif direction == "forward":
-            rospy.loginfo("forward")
-            self.move_forward()
-        elif direction == "backward":
-            self.move_backward()
-        elif direction == "left":
-            self.turn_left()
-        elif direction == "right":
-            self.turn_right()
-            
-        duration = float(data["duration"])
-        #rospy.sleep(duration)
-        #self.stop()
-
     def stop(self):
         self._left.stop()
         self._right.stop()
@@ -90,18 +61,6 @@ class MotorsDriver:
 
         self._left.update_speed(percent)
         self._right.update_speed(percent)
-        
-    def move_forward(self):
-        self._left.move_forward()
-        self._right.move_forward()
-        
-    def move_backward(self):
-        self._left.move_backward()
-        self._right.move_backward()
-        
-    def turn_right(self):
-        self._left.move_forward()
-        self._right.move_backward()
         
     def run(self):
         rospy.spin()
