@@ -3,6 +3,7 @@
 from std_msgs.msg import String
 import RPi.GPIO as GPIO
 from motor import Motor
+from encoder import Encoder
 import rospy
 import json
 
@@ -13,6 +14,8 @@ class MotorsDriver:
         GPIO.setmode(GPIO.BCM)
         self._left = Motor(5, 6, 26)
         self._right = Motor(27, 22, 16)
+        self._left_encoder = Encoder(12)
+        
         self._sub = rospy.Subscriber(
             "rvr_motors",
             String,
@@ -63,7 +66,11 @@ class MotorsDriver:
         self._right.update_speed(percent)
         
     def run(self):
-        rospy.spin()
+        while not rospy.is_shutdown():
+            if self._left_encoder.passed_tick():
+                rospy.loginfo("ticks: %s rotation: %s", 
+                        self._left_encoder.ticks, 
+                        self._left_encoder.rotations)
         
 if __name__ == "__main__":
     m = MotorsDriver()
