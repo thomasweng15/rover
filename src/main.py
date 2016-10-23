@@ -6,98 +6,104 @@ from motors_driver import MotorsDriver
 import json
 import rospy
 
-RATE = 0.2
+RATE = 0.001
 DISTANCE_THRESHOLD = 10
 
 class Controller:
-	def __init__(self, dist_threshold):
-		rospy.init_node("rvr_controller")
-		self._mode = "manual" 
-		self._dist_threshold = dist_threshold
-		self._is_avoiding_collision = False
-		
-		self._init_subs()
-		self._pub = rospy.Publisher("rvr_motors", String)
+    def __init__(self, dist_threshold):
+        rospy.init_node("rvr_controller")
+        self._is_auto = False 
+        self._x_pressed = False 
+        self._dist_threshold = dist_threshold
+        self._is_avoiding_collision = False
+        
+        self._init_subs()
+        self._pub = rospy.Publisher("rvr_motors", String)
 
-	def _init_subs(self):
-		self._control_sub = rospy.Subscriber(
-			"rvr_mode",
-			String,
-			self._mode_callback		
-		)
+    def _init_subs(self):
+        self._control_sub = rospy.Subscriber(
+            "rvr_mode",
+            String,
+            self._mode_callback     
+        )
 
-		self._ultrasonic_sub = rospy.Subscriber(
-			"rvr_ultrasonic", 
-			String, 
-			self._ultrasonic_callback
-		)
+        self._ultrasonic_sub = rospy.Subscriber(
+            "rvr_ultrasonic", 
+            String, 
+            self._ultrasonic_callback
+        )
                 
-		self._xbox_sub = rospy.Subscriber(
-			"xboxdrv", 
-			XboxController, 
-			self._xbox_callback
-		)
+        self._xbox_sub = rospy.Subscriber(
+            "xboxdrv", 
+            XboxController, 
+            self._xbox_callback
+        )
 
-	def _mode_callback(self, msg):
-		data = json.loads(msg.data)
-		mode = data["mode"]		
-		if mode == "auto" or mode == "manual":
-			self._mode = mode
-		
-	def _ultrasonic_callback(self, msg):
-		if self._mode == "manual":
-			return
+    def _mode_callback(self, msg):
+        data = json.loads(msg.data)
+        mode = data["mode"]     
+        if mode == "auto" or mode == "manual":
+            self._is_auto = not self._is_auto
+        
+    def _ultrasonic_callback(self, msg):
+        if not self._is_auto or self._is_avoiding_collision:
+            return
 
-		data = json.loads(msg.data)
-		distance = data["distance"]
-		if distance < self._dist_threshold:
-			rospy.logwarn("Detect close object: " + str(distance))
-			self._start_collision_avoidance()
+        data = json.loads(msg.data)
+        distance = data["distance"]
+        if distance < self._dist_threshold:
+            rospy.logwarn("Detect close object: " + str(distance))
+            self._start_collision_avoidance()
 
-	def _xbox_callback(self, msg):
-		if self._mode == "auto":
-			return
+    def _xbox_callback(self, msg):
+        if msg.X == True:
+            self._x_pressed = True
+        elif msg.X == False and self._x_pressed:
+            self._x_pressed = False
+            self._is_auto = not self._is_auto
+        
+        if self._is_auto:
+            return
 
-                rospy.loginfo("right: %i, left: %i", msg.RT, msg.LT)
+        y = float(msg.Y1) / 32768 * 100
+        x = float(msg.X2) / 32768 * 100 
+        self._publish_motor_command(x, y)
 
-	def _publish_direction(self, direction, duration):
-		data = { 
-			"direction" : direction,
-			"duration" : duration 
-		}
-		data_json = json.dumps(data)
-		self._pub.publish(String(data_json))
+    def _publish_motor_command(self, x, y):
+        data = {
+            "x": x,
+            "y": y
+        }
 
-	def _start_collision_avoidance(self):
-		self._is_avoiding_collision = True 
+        data_json = json.dumps(data)
+        self._pub.publish(String(data_json))
 
-	def _stop_collision_avoidance(self, event):
-		self._is_avoiding_collision = False
+    def _start_collision_avoidance(self):
+        if self._is_avoiding_collision:
+            return
 
-	def run_auto(self):
-		if self._is_avoiding_collision:
-			rospy.loginfo("Move backward for %s", RATE * 2)
-			self._publish_direction("backward", RATE * 2)
-			rospy.sleep(RATE * 2)
+        self._is_avoiding_collision = True 
+        rospy.logerr("Timer set")
+        rospy.Timer(rospy.Duration(3), self._stop_collision_avoidance, True)
 
-			rospy.loginfo("Turn right for %s", RATE * 1.5)
-			self._publish_direction("right", RATE * 1.5)
-			
-			rospy.Timer(rospy.Duration(RATE * 1.5), self._stop_collision_avoidance)
-			rospy.sleep(RATE * 1.5)
-		else:
-			rospy.loginfo("Move forward for %s", RATE)
-			self._publish_direction("forward", RATE)
+    def _stop_collision_avoidance(self, event):
+        self._is_avoiding_collision = False
 
-			rospy.sleep(RATE)
+    def run_auto(self):
+        if self._is_avoiding_collision:
+            rospy.loginfo("back up to the right")
+            self._publish_motor_command(100, -25)
+        else:
+            rospy.loginfo("Move forward")
+            self._publish_motor_command(0, 40)
 
-	def run(self):
-		while not rospy.is_shutdown():
-			if self._mode == "auto":
-				self.run_auto()
-			else:
-				rospy.sleep(RATE)			
+    def run(self):
+        while not rospy.is_shutdown():
+            if self._is_auto:
+                self.run_auto()
+            
+            rospy.sleep(RATE)           
 
 if __name__ == '__main__':
-	rover = Controller(DISTANCE_THRESHOLD)
-	rover.run()
+    rover = Controller(DISTANCE_THRESHOLD)
+    rover.run()
