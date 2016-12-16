@@ -32,7 +32,10 @@ class MotorsDriver:
         GPIO.setmode(GPIO.BCM)
         self._right = self._init_motor("in1", "in2", "ena")
         self._left = self._init_motor("in3", "in4", "enb")
-        if self._right == None or self._left == None:
+        self._left_encoder = self._init_encoder("left")
+        self._right_encoder = self._init_encoder("right")
+        if self._right == None or self._left == None \
+            or self._left_encoder == None or self._right_encoder == None:
             return False
 
         return True
@@ -46,6 +49,14 @@ class MotorsDriver:
             return None
 
         return Motor(pin1, pin2, pinE)
+
+    def _init_encoder(self, side):
+        pin = self.config.get("encoders", side)
+        if pin == None:
+            rospy.logerr("Get encoder pin failed")
+            return None
+
+        return Encoder(pin)
 
     def _shutdown_callback(self):
         self.stop()
