@@ -1,9 +1,10 @@
 #!/usr/bin/python
 
 from std_msgs.msg import String
-import RPi.GPIO as GPIO
+from config import Config
 from motor import Motor
 from encoder import Encoder
+import RPi.GPIO as GPIO
 import rospy
 import json
 
@@ -11,10 +12,9 @@ class MotorsDriver:
     def __init__(self):
         rospy.init_node("rvr_motors")
         
-        GPIO.setmode(GPIO.BCM)
-        self._left = Motor(5, 6, 26)
-        self._right = Motor(27, 22, 16)
-        self._left_encoder = Encoder(12)
+        if self._set_pins() == False:
+            rospy.logerr("Setting pins for motors failed")
+            return
         
         self._sub = rospy.Subscriber(
             "rvr_motors",
@@ -22,6 +22,30 @@ class MotorsDriver:
             self._motors_callback)
         
         rospy.on_shutdown(self._shutdown_callback)
+
+    def _set_pins(self):
+        self.config = Config()
+        if self.config == None:
+            rospy.logerr("Get config failed")
+            return False
+
+        GPIO.setmode(GPIO.BCM)
+        self._right = self._init_motor("in1", "in2", "ena")
+        self._left = self._init_motor("in3", "in4", "enb")
+        if self._right == None or self._left == None:
+            return False
+
+        return True
+
+    def _init_motor(self, pin1_s, pin2_s, pinE_s):
+        pin1 = self.config.get("motors", pin1_s)
+        pin2 = self.config.get("motors", pin2_s)
+        pinE = self.config.get("motors", pinE_s)
+        if pin1 == None or pin2 == None or pinE == None: 
+            rospy.logerr("Get motor pins failed")
+            return None
+
+        return Motor(pin1, pin2, pinE)
 
     def _shutdown_callback(self):
         self.stop()
@@ -66,11 +90,7 @@ class MotorsDriver:
         self._right.update_speed(percent)
         
     def run(self):
-        while not rospy.is_shutdown():
-            if self._left_encoder.passed_tick():
-                rospy.loginfo("ticks: %s rotation: %s", 
-                        self._left_encoder.ticks, 
-                        self._left_encoder.rotations)
+        rospy.spin()
         
 if __name__ == "__main__":
     m = MotorsDriver()
