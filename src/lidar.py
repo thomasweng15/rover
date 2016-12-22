@@ -2,10 +2,8 @@
 
 #Display Data from Neato LIDAR
 #based on code from Nicolas "Xevel" Saugnier
-#requires pyserial
 
-from rover.msg import LidarPoint
-from lidar_viz import LidarViz
+from sensor_msgs.msg import LaserScan
 import rospy
 import serial
 import sys
@@ -14,19 +12,36 @@ COM_PORT = "/dev/ttyACM0"
 BAUDRATE = 115200
 
 class Lidar:
-	def __init__(self, com_port, baudrate, hasViz):
+	def __init__(self, com_port, baudrate):
 		rospy.init_node("rvr_lidar")
 
-		self.pub = rospy.Publisher("/lidar", LidarPoint)
+		self.pub = rospy.Publisher("scan", LaserScan, queue_size=50)
 
-		self.lidarData = [LidarPoint() for i in range(360)]
+		self.laserScan = self._init_scan_msg()
+
 		self.init_level = 0
 		self.index = 0
 		self.serial = serial.Serial(com_port, baudrate)		
-		self.hasViz = hasViz
+
+	def _init_scan_msg(self):
+		num_readings = 360
 		
-		if self.hasViz:
-			self.viz = LidarViz(8000)
+		scan = LaserScan()
+		scan.header.frame_id = "laser_frame"
+		scan.angle_min = -3.14
+		scan.angle_max = 3.14
+		scan.angle_increment = 3.14 / 360
+		scan.time_increment = 0.2 / num_readings
+		scan.range_min = 0.0
+		scan.range_max = 5.0
+		scan.ranges = [0.0 for i in xrange(360)]
+		scan.intensities = [0.0 for j in xrange(360)] 
+		return scan
+
+	def _update_scan(self, angle, dist_mm, quality):
+		self.laserScan.header.stamp = rospy.Time.now()
+		self.laserScan.ranges[angle] = dist_mm / 1000.0
+		self.laserScan.intensities[angle] = quality
 
 	def checksum(self, data):
 		"""
@@ -62,27 +77,13 @@ class Lidar:
 
 		dist_mm = x0 | ((x1 & 0x3f) << 8) # distance is coded on 13 bits ? 14 bits ?
 		quality = x2 | (x3 << 8) # quality is on 16 bits
-		self.lidarData[angle].dist_mm = dist_mm
-		self.lidarData[angle].quality = quality
-
-		point = LidarPoint()
-		point.angle = angle
-		point.dist_mm = dist_mm
-		point.quality = quality
-
-		self.pub.publish(point)
 		
-		if self.hasViz:
-			self.viz.redraw(x1, angle, dist_mm, quality)
-
+		self._update_scan(angle, dist_mm, quality)
+		
 	def run(self):
+		rate = rospy.Rate(200)
 		while not rospy.is_shutdown():
 			try: 
-				rospy.sleep(0.00001)
-				
-				if self.hasViz:
-					self.viz.checkKeys()
-
 				if self.init_level == 0:							
 					byte = ord(self.serial.read(1))
 					# start byte
@@ -120,9 +121,6 @@ class Lidar:
 					if self.checksum(all_data) == incoming_checksum:
 						speed_rpm = self.compute_speed(b_speed)
 					
-						if self.hasViz:
-							self.viz.update_speed(int(speed_rpm))
-				
 						self.update_position(self.index * 4 + 0, b_data0)
 						self.update_position(self.index * 4 + 1, b_data1)
 						self.update_position(self.index * 4 + 2, b_data2)
@@ -137,13 +135,13 @@ class Lidar:
 						self.update_position(self.index * 4 + 3, null_data)
 
 					self.init_level = 0
+
+					self.pub.publish(self.laserScan)
+					rospy.loginfo(speed_rpm)
+					rate.sleep();
 			except Exception as e: 
 				rospy.logerr(e)
 
 if __name__ == '__main__':
-	hasViz = False
-	if len(sys.argv) > 1 and sys.argv[1] == "-v":
-		hasViz = True
-
-	l = Lidar(COM_PORT, BAUDRATE, False)
+	l = Lidar(COM_PORT, BAUDRATE)
 	l.run()
