@@ -1,8 +1,5 @@
 #!/usr/bin/python
 
-#Display Data from Neato LIDAR
-#based on code from Nicolas "Xevel" Saugnier
-
 from sensor_msgs.msg import LaserScan
 import rospy
 import serial

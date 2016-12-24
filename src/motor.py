@@ -1,7 +1,10 @@
 import RPi.GPIO as GPIO
+from encoder import Encoder
 
 class Motor:
-    def __init__(self, pin_1, pin_2, pin_pwm):
+    def __init__(self, pin_1, pin_2, pin_pwm, pin_enc):
+        self.encoder = Encoder(pin_enc)
+
         GPIO.setmode(GPIO.BCM)
         self.pin_1 = pin_1
         self.pin_2 = pin_2
@@ -17,7 +20,7 @@ class Motor:
 
     def update(self, percent, is_forward):
         self.pwm.ChangeDutyCycle(percent)
-        if is_forward == True:
+        if is_forward:
             self.move_forward()
         else:
             self.move_backward()

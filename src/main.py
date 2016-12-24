@@ -18,7 +18,7 @@ class Controller:
         self._is_avoiding_collision = False
         
         self._init_subs()
-        self._pub = rospy.Publisher("rvr_motors", String)
+        self._pub = rospy.Publisher("rvr_motors", String, queue_size=50)
 
     def _init_subs(self):
         self._control_sub = rospy.Subscriber(

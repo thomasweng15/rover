@@ -1,9 +1,9 @@
 #!/usr/bin/python
 
 from std_msgs.msg import String
+from nav_msgs.msg import Odometry
 from config import Config
 from motor import Motor
-from encoder import Encoder
 import RPi.GPIO as GPIO
 import rospy
 import json
@@ -21,6 +21,11 @@ class MotorsDriver:
             String,
             self._motors_callback)
         
+        self.pub = rospy.Publisher(
+            "odom",
+            Odometry,
+            queue_size=50)
+
         rospy.on_shutdown(self._shutdown_callback)
 
     def _set_pins(self):
@@ -30,33 +35,24 @@ class MotorsDriver:
             return False
 
         GPIO.setmode(GPIO.BCM)
-        self._right = self._init_motor("in1", "in2", "ena")
-        self._left = self._init_motor("in3", "in4", "enb")
-        self._left_encoder = self._init_encoder("left")
-        self._right_encoder = self._init_encoder("right")
-        if self._right == None or self._left == None \
-            or self._left_encoder == None or self._right_encoder == None:
-            return False
+        self._right = self._init_motor("in1", "in2", "ena", "right")
+        self._left = self._init_motor("in3", "in4", "enb", "left")
+        return self._right != None and self._left != None
 
-        return True
-
-    def _init_motor(self, pin1_s, pin2_s, pinE_s):
+    def _init_motor(self, pin1_s, pin2_s, pinE_s, pin_enc_s):
         pin1 = self.config.get("motors", pin1_s)
         pin2 = self.config.get("motors", pin2_s)
         pinE = self.config.get("motors", pinE_s)
+        pinS = self.config.get("encoders", pin_enc_s)
         if pin1 == None or pin2 == None or pinE == None: 
             rospy.logerr("Get motor pins failed")
             return None
-
-        return Motor(pin1, pin2, pinE)
-
-    def _init_encoder(self, side):
-        pin = self.config.get("encoders", side)
-        if pin == None:
-            rospy.logerr("Get encoder pin failed")
+    
+        if pinS == None:
+            rospy.logerr("Get %s encoder pin failed", pin_enc_s)
             return None
 
-        return Encoder(pin)
+        return Motor(pin1, pin2, pinE, pinS)
 
     def _shutdown_callback(self):
         self.stop()
@@ -101,7 +97,20 @@ class MotorsDriver:
         self._right.update_speed(percent)
         
     def run(self):
-        rospy.spin()
+        rate = rospy.Rate(20)
+        current_time = rospy.Time.now()
+        last_time = current_time
+        while not rospy.is_shutdown():
+            current_time = rospy.Time.now()
+
+            odom = Odometry()
+            odom.header.stamp = current_time
+            odom.header.frame_id = "odom"
+
+            odom.child_frame_id = "base_link"
+
+            self.pub.publish(odom)
+            rate.sleep()
         
 if __name__ == "__main__":
     m = MotorsDriver()
