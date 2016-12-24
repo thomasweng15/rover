@@ -21,7 +21,21 @@ class Lidar:
 
 		self.init_level = 0
 		self.index = 0
-		self.serial = serial.Serial(com_port, baudrate)		
+		self.serial = self._init_serial(com_port, baudrate)
+		if self.serial is None:
+			rospy.signal_shutdown("Shutting down lidar node")
+
+	def _init_serial(self, com_port, baudrate):
+		try: 
+			ser = serial.Serial(com_port, baudrate)	
+			if ser is None:
+				return
+
+			ser.write(b'SetRPM 300\n')
+			return ser
+		except Exception as e:
+			rospy.logerr("serial port failed to open: %s", e)
+			return None
 
 	def _init_scan_msg(self):
 		num_readings = 360
@@ -80,64 +94,62 @@ class Lidar:
 		
 		self._update_scan(angle, dist_mm, quality)
 		
+	def _handle_init_level_0(self):
+		byte = ord(self.serial.read(1))
+		# start byte
+		if byte == 0xFA:
+			self.init_level = 1
+		else:
+			self.init_level = 0
+
+	def _handle_init_level_1(self):
+		# position index 
+		byte = ord(self.serial.read(1))
+		if byte >= 0xA0 and byte <= 0xF9:
+			self.index = byte - 0xA0
+			self.init_level = 2
+		elif byte != 0xFA:
+			self.init_level = 0
+
+	def _handle_init_level_2(self):
+		b_speed = [ord(b) for b in self.serial.read(2)]
+		b_data = [[ord(b) for b in self.serial.read(4)] for i in xrange(4)]
+
+		# for the checksum, we need all the data of the packet...
+		# this could be collected in a more elegant fashion...
+		all_data = [0xFA, self.index+0xA0] + b_speed + \
+				b_data[0] + b_data[1] + b_data[2] + b_data[3]
+
+		# checksum
+		b_checksum = [ord(b) for b in self.serial.read(2)]
+		incoming_checksum = int(b_checksum[0]) + (int(b_checksum[1]) << 8)
+
+		# verify that the received checksum is equal to the one computed from data
+		if self.checksum(all_data) == incoming_checksum:
+			speed_rpm = self.compute_speed(b_speed)
+					
+			for i in xrange(4):
+				self.update_position(self.index * 4 + i, b_data[i])
+		else:
+			rospy.logwarn("checksum mismatch")
+			
+			null_data = [0, 0x80, 0, 0]
+			for i in xrange(4):
+				self.update_position(self.index * 4 + i, null_data)
+
+		self.pub.publish(self.laserScan)
+		self.init_level = 0
+
 	def run(self):
 		rate = rospy.Rate(200)
 		while not rospy.is_shutdown():
 			try: 
-				if self.init_level == 0:							
-					byte = ord(self.serial.read(1))
-					# start byte
-					if byte == 0xFA:
-						self.init_level = 1
-					else:
-						self.init_level = 0
+				if self.init_level == 0:	
+					self._handle_init_level_0()
 				elif self.init_level == 1:
-					# position index 
-					byte = ord(self.serial.read(1))
-					if byte >= 0xA0 and byte <= 0xF9:
-						self.index = byte - 0xA0
-						self.init_level = 2
-					elif byte != 0xFA:
-						self.init_level = 0
+					self._handle_init_level_1()
 				elif self.init_level == 2:
-					# speed
-					b_speed = [ord(b) for b in self.serial.read(2)]
-
-					# data
-					b_data0 = [ord(b) for b in self.serial.read(4)]
-					b_data1 = [ord(b) for b in self.serial.read(4)]
-					b_data2 = [ord(b) for b in self.serial.read(4)]
-					b_data3 = [ord(b) for b in self.serial.read(4)]
-
-					# for the checksum, we need all the data of the packet...
-					# this could be collected in a more elegant fashion...
-					all_data = [0xFA, self.index+0xA0] + b_speed + b_data0 + b_data1 + b_data2 + b_data3
-
-					# checksum
-					b_checksum = [ord(b) for b in self.serial.read(2)]
-					incoming_checksum = int(b_checksum[0]) + (int(b_checksum[1]) << 8)
-
-					# verify that the received checksum is equal to the one computed from the data
-					if self.checksum(all_data) == incoming_checksum:
-						speed_rpm = self.compute_speed(b_speed)
-					
-						self.update_position(self.index * 4 + 0, b_data0)
-						self.update_position(self.index * 4 + 1, b_data1)
-						self.update_position(self.index * 4 + 2, b_data2)
-						self.update_position(self.index * 4 + 3, b_data3)
-					else:
-						rospy.logwarn("checksum mismatch")
-
-						null_data = [0, 0x80, 0, 0]
-						self.update_position(self.index * 4 + 0, null_data)
-						self.update_position(self.index * 4 + 1, null_data)
-						self.update_position(self.index * 4 + 2, null_data)
-						self.update_position(self.index * 4 + 3, null_data)
-
-					self.init_level = 0
-
-					self.pub.publish(self.laserScan)
-					rospy.loginfo(speed_rpm)
+					self._handle_init_level_2()
 					rate.sleep();
 			except Exception as e: 
 				rospy.logerr(e)
