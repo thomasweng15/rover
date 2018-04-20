@@ -1,10 +1,7 @@
 import RPi.GPIO as GPIO
-from encoder import Encoder
 
 class Motor:
-    def __init__(self, pin_1, pin_2, pin_pwm, pin_enc):
-        self.encoder = Encoder(pin_enc)
-
+    def __init__(self, pin_1, pin_2, pin_pwm):
         GPIO.setmode(GPIO.BCM)
         self.pin_1 = pin_1
         self.pin_2 = pin_2

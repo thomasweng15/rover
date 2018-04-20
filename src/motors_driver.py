@@ -35,24 +35,19 @@ class MotorsDriver:
             return False
 
         GPIO.setmode(GPIO.BCM)
-        self._right = self._init_motor("in1", "in2", "ena", "right")
-        self._left = self._init_motor("in3", "in4", "enb", "left")
+        self._right = self._init_motor("in1", "in2", "ena")
+        self._left = self._init_motor("in3", "in4", "enb")
         return self._right != None and self._left != None
 
-    def _init_motor(self, pin1_s, pin2_s, pinE_s, pin_enc_s):
+    def _init_motor(self, pin1_s, pin2_s, pinE_s):
         pin1 = self.config.get("motors", pin1_s)
         pin2 = self.config.get("motors", pin2_s)
         pinE = self.config.get("motors", pinE_s)
-        pinS = self.config.get("encoders", pin_enc_s)
         if pin1 == None or pin2 == None or pinE == None: 
             rospy.logerr("Get motor pins failed")
             return None
     
-        if pinS == None:
-            rospy.logerr("Get %s encoder pin failed", pin_enc_s)
-            return None
-
-        return Motor(pin1, pin2, pinE, pinS)
+        return Motor(pin1, pin2, pinE)
 
     def _shutdown_callback(self):
         self.stop()
@@ -67,9 +62,9 @@ class MotorsDriver:
         
         power_ratio = data["x"]
         if power_ratio is not None and power_ratio > 5:
-            right_power = right_power * (1 - power_ratio / 100) 
+            left_power = left_power * (1 - power_ratio / 100) 
         elif power_ratio is not None and power_ratio < -5:
-            left_power = left_power * (1 - (power_ratio * -1) / 100)
+            right_power = right_power * (1 - (power_ratio * -1) / 100)
 
         left_power = left_power if left_power > 20 else 0
         right_power = right_power if right_power > 20 else 0
@@ -98,18 +93,21 @@ class MotorsDriver:
         
     def run(self):
         rate = rospy.Rate(20)
-        current_time = rospy.Time.now()
-        last_time = current_time
+        curr_time = rospy.Time.now()
+        last_time = curr_time
         while not rospy.is_shutdown():
-            current_time = rospy.Time.now()
+            last_time = curr_time
+            curr_time = rospy.Time.now()
 
             odom = Odometry()
-            odom.header.stamp = current_time
+            odom.header.stamp = curr_time
             odom.header.frame_id = "odom"
-
             odom.child_frame_id = "base_link"
-
             self.pub.publish(odom)
+
+            #self._left.encoder.update(curr_time)
+            #self._right.encoder.update(curr_time)
+            
             rate.sleep()
         
 if __name__ == "__main__":
