@@ -1,7 +1,7 @@
 #!/usr/bin/python
 
 from std_msgs.msg import String
-from nav_msgs.msg import Odometry
+from geometry_msgs.msg import Twist, Vector3
 from config import Config
 from motor import Motor
 import RPi.GPIO as GPIO
@@ -16,16 +16,7 @@ class MotorsDriver:
             rospy.logerr("Setting pins for motors failed")
             return
         
-        self._sub = rospy.Subscriber(
-            "rvr_motors",
-            String,
-            self._motors_callback)
-        
-        self.pub = rospy.Publisher(
-            "odom",
-            Odometry,
-            queue_size=50)
-
+        self._sub = rospy.Subscriber("turtlebot_telop_keyboard/cmd_vel", Twist, self._telop_callback)
         rospy.on_shutdown(self._shutdown_callback)
 
     def _set_pins(self):
@@ -53,28 +44,13 @@ class MotorsDriver:
         self.stop()
         GPIO.cleanup()
 
-    def _motors_callback(self, msg):
-        data = json.loads(msg.data)
+    def _telop_callback(self, msg):
+        Vector3 linear = msg.linear
+        if linear.x == 0:
+            return
 
-        percent_power = data["y"]
-        left_power = abs(percent_power) if percent_power is not None else 1
-        right_power = abs(percent_power) if percent_power is not None else 1
-        
-        power_ratio = data["x"]
-        if power_ratio is not None and power_ratio > 5:
-            left_power = left_power * (1 - power_ratio / 100) 
-        elif power_ratio is not None and power_ratio < -5:
-            right_power = right_power * (1 - (power_ratio * -1) / 100)
-
-        left_power = left_power if left_power > 20 else 0
-        right_power = right_power if right_power > 20 else 0
-
-        left_power = left_power if left_power < 100 else 99
-        right_power = right_power if right_power < 100 else 99
-
-        is_forward = percent_power >= 0 if percent_power is not None else True
-        self._left.update(left_power, is_forward)
-        self._right.update(right_power, is_forward)
+        self._left.update(50, linear.x > 0)
+        self._right.update(50, linear.x > 0)
 
     def stop(self):
         self._left.stop()
@@ -92,23 +68,7 @@ class MotorsDriver:
         self._right.update_speed(percent)
         
     def run(self):
-        rate = rospy.Rate(20)
-        curr_time = rospy.Time.now()
-        last_time = curr_time
-        while not rospy.is_shutdown():
-            last_time = curr_time
-            curr_time = rospy.Time.now()
-
-            odom = Odometry()
-            odom.header.stamp = curr_time
-            odom.header.frame_id = "odom"
-            odom.child_frame_id = "base_link"
-            self.pub.publish(odom)
-
-            #self._left.encoder.update(curr_time)
-            #self._right.encoder.update(curr_time)
-            
-            rate.sleep()
+        rospy.spin()
         
 if __name__ == "__main__":
     m = MotorsDriver()
