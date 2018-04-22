@@ -1,7 +1,7 @@
 import json
 
 class Config:
-    def __init__(self, fname="/home/pi/ros_catkin_ws/src/rover/src/config.json"):
+    def __init__(self, fname="/home/pi/catkin_ws/src/rover/src/config.json"):
         self.config = None
         with open(fname, 'r') as f:
             self.config = json.load(f)

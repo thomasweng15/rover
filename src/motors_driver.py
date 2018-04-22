@@ -16,7 +16,7 @@ class MotorsDriver:
             rospy.logerr("Setting pins for motors failed")
             return
         
-        self._sub = rospy.Subscriber("turtlebot_telop_keyboard/cmd_vel", Twist, self._telop_callback)
+        self._sub = rospy.Subscriber("cmd_vel", Twist, self._telop_callback)
         rospy.on_shutdown(self._shutdown_callback)
 
     def _set_pins(self):
@@ -45,12 +45,10 @@ class MotorsDriver:
         GPIO.cleanup()
 
     def _telop_callback(self, msg):
-        Vector3 linear = msg.linear
-        if linear.x == 0:
-            return
+        linear = msg.linear
 
-        self._left.update(50, linear.x > 0)
-        self._right.update(50, linear.x > 0)
+        self._left.update(abs(linear.x*100), linear.x > 0)
+        self._right.update(abs(linear.x*100), linear.x > 0)
 
     def stop(self):
         self._left.stop()
