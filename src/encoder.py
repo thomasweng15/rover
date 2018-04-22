@@ -12,36 +12,24 @@ RATE=20 # 0.05 secs
 
 class Encoder:
     def __init__(self, encoder_id):
-        self._init_rospy(encoder_id)
+        rospy.init_node("encoder_" + encoder_id)
 
         GPIO.setmode(GPIO.BCM)
         self.pin = self._init_pin(encoder_id)
         GPIO.setup(self.pin, GPIO.IN)
 
         self.pin_val = 0
-        self.prev_pin_val = 0
 
         self.curr_time = rospy.Time.now()
-        self.prev_time = self.curr_time 
+        self.prev_time = self.curr_time
 
         self.is_moving_forward = True
         self.forward_ticks = 0
         self.backward_ticks = 0
-
         self.meters_per_sec = 0.0
 
-    def _init_rospy(self, encoder_id):
-        rospy.init_node("encoder_" + encoder_id)
-        self.pub = rospy.Publisher(
-            encoder_id + "_m/s",
-            Float32,
-            queue_size=50)
-
-        self.sub = rospy.Subscriber(
-            encoder_id + "_direction",
-            String,
-            self._direction_callback)
-
+        self.pub = rospy.Publisher(encoder_id + "_m/s", Float32, queue_size=50)
+        self.sub = rospy.Subscriber(encoder_id + "_direction", String, self._direction_callback)
         rospy.on_shutdown(self._shutdown_callback)
 
     def _direction_callback(self):
@@ -63,32 +51,20 @@ class Encoder:
 
         return pin
 
-    def _update(self, curr_time):
+    def _update(self):
         self.prev_time = self.curr_time
-        self.curr_time = curr_time
+        self.curr_time = rospy.Time.now()
 
-        # Check if tick passed during duration
-        self.pin_val = GPIO.input(self.pin)
-        passed_tick = self._update_ticks()
-        self.prev_pin_val = self.pin_val
- 
-        self._update_velocity(passed_tick)
+        new_pin_val = GPIO.input(self.pin)
+        tick_passed = self.pin_val == 0 and new_pin_val == 1
+        self.forward_ticks += 1 if tick_passed and self.is_moving_forward else 0
+        self.backward_ticks += 1 if tick_passed and not self.is_moving_forward else 0
+        self.pin_val = new_pin_val
 
-    def _update_ticks(self):
-        if not (self.pin_val == 0 and self.prev_pin_val == 1):
-            return False
-            
-        if self.is_moving_forward:
-            self.forward_ticks += 1
-        else:
-            self.backward_ticks += 1
-    
-        return True
+        self._update_velocity()
+        self._publish_velocity()
 
-    def _update_velocity(self, passed_tick):
-        if not passed_tick:
-            return
-
+    def _update_velocity(self):
         # TODO
         self.meters_per_sec = 0
 
@@ -100,9 +76,7 @@ class Encoder:
     def run(self):
         rate = rospy.Rate(RATE)
         while not rospy.is_shutdown():
-            self._update(rospy.Time.now())
-            self._publish_velocity()
-
+            self._update()
             rate.sleep()
 
 if __name__ == '__main__':
