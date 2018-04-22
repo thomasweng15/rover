@@ -1,7 +1,7 @@
 #!/usr/bin/python
 
 from std_msgs.msg import String
-from geometry_msgs.msg import Twist, Vector3
+from geometry_msgs.msg import Twist
 from config import Config
 from motor import Motor
 import RPi.GPIO as GPIO
@@ -53,21 +53,10 @@ class MotorsDriver:
     def stop(self):
         self._left.stop()
         self._right.stop()
-        
-    def update_speed(self, percent):
-        if percent > 100:
-            rospy.logwarn("speed percentage out of bounds: %s", str(percent) + "%")
-            return 
-        
-        if percent < 20:
-            percent = 0
 
-        self._left.update_speed(percent)
-        self._right.update_speed(percent)
-        
     def run(self):
         rospy.spin()
-        
+
 if __name__ == "__main__":
     m = MotorsDriver()
     m.run()
