@@ -8,7 +8,7 @@ import json
 import sys
 
 TICK_TO_M=0.1
-RATE=20 # 0.05 secs
+RATE=1 # 1 per second
 
 class Encoder:
     def __init__(self, encoder_id):
