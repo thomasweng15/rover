@@ -1,11 +1,13 @@
 #!/usr/bin/python
 
+import sys
+import os
+sys.path.append(os.path.abspath('../scripts'))
 from config import Config
 from motor import Motor
 from encoder import Encoder
-import Rpi.GPIO as GPIO
+import RPi.GPIO as GPIO
 import json
-import sys
 import time
 
 def _init_motor(config, pin1_s, pin2_s, pinE_s):
@@ -25,18 +27,17 @@ if config == None:
 
 GPIO.setmode(GPIO.BCM)
 right = _init_motor(config, "in1", "in2", "ena")
+right.update(0, True)
 right_enc = Encoder("right")
 
-max_power = 40
+power = 100
 try:
-    for i in range(20, max_power + 1, 10):
-        print "Updating power to " + i
-        right.update(i, True)
-
-        count = 0
-        while count < 5:
-            count++;
-            time.sleep(1)
+    print "Updating power to " + str(power)
+    right.update(power, True)
+    
+    t_end = time.time() + 10
+    while time.time() < t_end:
+        x = 1 # stub
 except Exception as e:
     print e
     right.stop()
