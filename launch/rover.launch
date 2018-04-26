@@ -3,5 +3,6 @@
 	<!-- <node name="left_encoder" pkg="rover" type="encoder.py" args="left" output="screen" /> -->
 	<!-- <node name="right_encoder" pkg="rover" type="encoder.py" args="right" output="screen" /> -->
 	<node name="motors" pkg="rover" type="motors_driver.py" output="screen" />
+	<node name="odom" pkg="rover" type="odometry.py" output="screen" />
 	<!-- <node name="lidar" pkg="rover" type="lidar.py" output="screen" /> -->
 </launch>
