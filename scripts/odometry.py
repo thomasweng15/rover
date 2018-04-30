@@ -14,7 +14,7 @@ class Odom:
         self.last_time = self.curr_time
 
     def run(self):
-        rate = rospy.Rate(0.1)
+        rate = rospy.Rate(10)
         while not rospy.is_shutdown():
             self.curr_time = rospy.Time.now()
 
