@@ -1,0 +1,5 @@
+<launch>
+	<param name="use_sim_time" value="true" />
+	<node pkg="rviz" type="rviz" name="rover_rviz" />
+	<node pkg="rosbag" type="play" name="sim_data" args="-l $(find rover)/test/scan.bag" />
+</launch>
