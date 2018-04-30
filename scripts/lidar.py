@@ -36,15 +36,15 @@ class Lidar:
 			return None
 
 	def _init_scan_msg(self):
-		num_readings = 360
+		num_readings = 360.0
 		
 		scan = LaserScan()
 		scan.header.frame_id = "laser_frame"
-		scan.angle_min = -math.pi
-		scan.angle_max = math.pi
-		scan.angle_increment = math.pi / num_readings 
+		scan.angle_min = 0
+		scan.angle_max = 2.0*math.pi
+		scan.angle_increment = 2.0*math.pi / num_readings 
 		scan.time_increment = 0.2 / num_readings
-		scan.range_min = 0.0
+		scan.range_min = 0.06
 		scan.range_max = 5.0
 		scan.ranges = [0.0 for i in xrange(360)]
 		scan.intensities = [0.0 for j in xrange(360)] 
