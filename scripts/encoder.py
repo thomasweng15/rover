@@ -26,12 +26,12 @@ class Encoder:
         self.duration = rospy.Duration.from_sec(DURATION)
 
         self.is_moving_forward = True
-        self.forward_ticks = 0
-        self.backward_ticks = 0
+        self.forward_ticks = []
+        self.backward_ticks = []
         self.meters_per_tick = METERS_PER_TICK
         self.meters_per_sec = 0.0
 
-        self.pub = rospy.Publisher(enc_id + "_m/s", Float64, queue_size=50)
+        self.pub = rospy.Publisher("odom_vel_" + enc_id, Float64, queue_size=50)
         self.sub = rospy.Subscriber("cmd_vel_" + enc_id, Float64, self._cmd_vel_cb)
         rospy.on_shutdown(self._shutdown_callback)
 
@@ -75,10 +75,10 @@ class Encoder:
         self._remove_expired_ticks(self.forward_ticks, expiration)
         self._remove_expired_ticks(self.backward_ticks, expiration)
 
-    def _remove_expired_ticks(queue, expiration):
+    def _remove_expired_ticks(self, queue, expiration):
         index = None
         for i, ts in enumerate(queue):
-            if expiration < ts:
+            if ts < expiration:
                 index = i
                 break
         
@@ -98,9 +98,7 @@ class Encoder:
     def run(self):
         rate = rospy.Rate(RATE)
         while not rospy.is_shutdown():
-            rospy.spinOnce()
-            
-            tick_detected = self._check_for_tick():
+            tick_detected = self._check_for_tick()
             if tick_detected:
                 self._add_tick_to_queue()
 
