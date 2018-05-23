@@ -4,7 +4,7 @@ import tf
 from nav_msgs.msg import Odometry
 from geometry_msgs.msg import Point, Pose, Quaternion, Twist, Vector3
 
-class Odometry:
+class Odom:
     def __init__(self):
         rospy.init_node("rvr_odom")
         self.pub = rospy.Publisher("odom", Odometry, queue_size=50)
@@ -51,5 +51,5 @@ class Odometry:
             rate.sleep()
 
 if __name__ == "__main__":
-    o = Odometry()
+    o = Odom()
     o.run()
