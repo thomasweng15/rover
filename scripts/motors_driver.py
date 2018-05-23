@@ -1,6 +1,6 @@
 #!/usr/bin/python
 
-from std_msgs.msg import String, Bool
+from std_msgs.msg import String, Float64
 from geometry_msgs.msg import Twist
 from config import Config
 from motor import Motor
@@ -17,8 +17,8 @@ class MotorsDriver:
             return
         
         self._sub = rospy.Subscriber("cmd_vel", Twist, self._telop_callback)
-        self._pub_dir_l = rospy.Publisher("wheel_dir_l", Bool)
-        self._pub_dir_r = rospy.Publisher("wheel_dir_r", Bool)
+        self._pub_vel_l = rospy.Publisher("cmd_vel_l", Float64, queue_size=10)
+        self._pub_vel_r = rospy.Publisher("cmd_vel_r", Float64, queue_size=10)
         
         rospy.on_shutdown(self._shutdown_callback)
 
@@ -50,11 +50,11 @@ class MotorsDriver:
     def _telop_callback(self, msg):
         linear = msg.linear
 
-        self._pub_dir_l.publish(Bool(linear.x > 0))
-        self._pub_dir_r.publish(Bool(linear.x > 0))
+        self._pub_vel_l.publish(Float64(linear.x))
+        self._pub_vel_r.publish(Float64(linear.x))
 
-        self._left.update(abs(linear.x*100), linear.x > 0)
-        self._right.update(abs(linear.x*100), linear.x > 0)
+        self._left.update(abs(linear.x*100), linear.x >= 0)
+        self._right.update(abs(linear.x*100), linear.x >= 0)
 
     def stop(self):
         self._left.stop()

@@ -2,7 +2,7 @@
 
 import RPi.GPIO as GPIO
 from config import Config
-from std_msgs.msg import Float32, String, Bool
+from std_msgs.msg import Float64
 import rospy
 import json
 import sys
@@ -11,11 +11,11 @@ TICK_TO_M=0.1
 RATE=1 # 1 per second
 
 class Encoder:
-    def __init__(self, encoder_id):
-        rospy.init_node("encoder_" + encoder_id)
+    def __init__(self, enc_id):
+        rospy.init_node("encoder_" + enc_id)
 
         GPIO.setmode(GPIO.BCM)
-        self.pin = self._init_pin(encoder_id)
+        self.pin = self._init_pin(enc_id)
         GPIO.setup(self.pin, GPIO.IN)
 
         self.pin_val = 0
@@ -28,24 +28,23 @@ class Encoder:
         self.backward_ticks = 0
         self.meters_per_sec = 0.0
 
-        self.pub = rospy.Publisher(encoder_id + "_m/s", Float32, queue_size=50)
-        self.sub = rospy.Subscriber("wheel_dir_" + encoder_id, Bool, self._wheel_dir_callback)
+        self.pub = rospy.Publisher(enc_id + "_m/s", Float64, queue_size=50)
+        self.sub = rospy.Subscriber("cmd_vel_" + enc_id, Float64, self._cmd_vel_cb)
         rospy.on_shutdown(self._shutdown_callback)
 
-    def _wheel_dir_callback(self, msg):
-        rospy.loginfo(msg)
-        self.is_moving_forward = msg.data
+    def _cmd_vel_cb(self, msg):
+        self.is_moving_forward = msg.data >= 0
 
     def _shutdown_callback(self):
         GPIO.cleanup()
 
-    def _init_pin(self, encoder_id):
+    def _init_pin(self, enc_id):
         config = Config()
         if config == None: 
             rospy.logerr("Get config failed")
             sys.exit(1) 
 
-        pin =  config.get("encoders", encoder_id) 
+        pin = config.get("encoders", enc_id) 
         if pin == None:
             rospy.logerr("Get encoder pin failed")
             sys.exit(1)
@@ -70,7 +69,7 @@ class Encoder:
         self.meters_per_sec = 0
 
     def _publish_velocity(self):
-        msg = Float32()
+        msg = Float64()
         msg.data = self.meters_per_sec
         self.pub.publish(msg)
 
