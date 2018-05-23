@@ -2,7 +2,7 @@
 
 import RPi.GPIO as GPIO
 from config import Config
-from std_msgs.msg import Float32,String
+from std_msgs.msg import Float32, String, Bool
 import rospy
 import json
 import sys
@@ -29,11 +29,12 @@ class Encoder:
         self.meters_per_sec = 0.0
 
         self.pub = rospy.Publisher(encoder_id + "_m/s", Float32, queue_size=50)
-        self.sub = rospy.Subscriber(encoder_id + "_direction", String, self._direction_callback)
+        self.sub = rospy.Subscriber("wheel_dir_" + encoder_id, Bool, self._wheel_dir_callback)
         rospy.on_shutdown(self._shutdown_callback)
 
-    def _direction_callback(self):
-        self.is_moving_forward = not self.is_moving_forward
+    def _wheel_dir_callback(self, msg):
+        rospy.loginfo(msg)
+        self.is_moving_forward = msg.data
 
     def _shutdown_callback(self):
         GPIO.cleanup()

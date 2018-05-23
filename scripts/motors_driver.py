@@ -1,6 +1,6 @@
 #!/usr/bin/python
 
-from std_msgs.msg import String
+from std_msgs.msg import String, Bool
 from geometry_msgs.msg import Twist
 from config import Config
 from motor import Motor
@@ -17,6 +17,9 @@ class MotorsDriver:
             return
         
         self._sub = rospy.Subscriber("cmd_vel", Twist, self._telop_callback)
+        self._pub_dir_l = rospy.Publisher("wheel_dir_l", Bool)
+        self._pub_dir_r = rospy.Publisher("wheel_dir_r", Bool)
+        
         rospy.on_shutdown(self._shutdown_callback)
 
     def _set_pins(self):
@@ -46,6 +49,9 @@ class MotorsDriver:
 
     def _telop_callback(self, msg):
         linear = msg.linear
+
+        self._pub_dir_l.publish(Bool(linear.x > 0))
+        self._pub_dir_r.publish(Bool(linear.x > 0))
 
         self._left.update(abs(linear.x*100), linear.x > 0)
         self._right.update(abs(linear.x*100), linear.x > 0)
