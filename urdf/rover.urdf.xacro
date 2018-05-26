@@ -64,6 +64,22 @@
     <origin xyz="0 -0.07 -0.02"/>
   </joint>
 
+  <link name="caster_wheel">
+    <visual>
+      <geometry>
+        <sphere radius="0.01"/>
+      </geometry>
+      <origin rpy="0 0 0" xyz="0 0 0"/>
+      <material name="black"/>
+    </visual>
+  </link>
+
+  <joint name="caster_support_to_wheel" type="fixed">
+    <parent link="caster_support"/>
+    <child link="caster_wheel"/>
+    <origin xyz="0 0 -0.02"/>
+  </joint>
+
   <xacro:wheel prefix="left" reflect="-1"/> 
   <xacro:wheel prefix="right" reflect="1"/> 
 
