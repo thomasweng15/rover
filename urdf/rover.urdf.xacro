@@ -1,5 +1,7 @@
 <?xml version="1.0"?>
 <robot xmlns:xacro="http://www.ros.org/wiki/xacro" name="rover">
+  <xacro:property name="pi" value="3.1415"/>
+
   <material name="tan">
     <color rgba="${245/255} ${222/255} ${179/255} 1"/>
   </material>
@@ -8,11 +10,14 @@
     <color rgba="0.8 0.8 0 1"/>
   </material>
 
+  <material name="black">
+    <color rgba="0 0 0 1"/>
+  </material>
 
   <link name="base_link">
     <visual>
       <geometry>
-        <box size="0.14 0.2 0.01"/>
+        <box size="0.14 0.20 0.01"/>
       </geometry>
       <material name="tan"/>
     </visual>
@@ -48,7 +53,23 @@
     <joint name="base_to_${prefix}_motor" type="fixed">
       <parent link="base_link"/>
       <child link="${prefix}_motor"/>
-      <origin xyz="${reflect*0.06} 0.02 -0.015"/>
+      <origin xyz="${reflect*0.06} 0.01 -0.015"/>
+    </joint>
+
+    <link name="${prefix}_wheel">
+      <visual>
+        <geometry>
+          <cylinder length="0.027" radius="0.0325"/>
+        </geometry>
+        <origin xyz="0 0 0" rpy="0 ${pi/2} 0"/>
+        <material name="black"/>
+      </visual>
+    </link>
+
+    <joint name="${prefix}_motor_to_wheel" type="fixed">
+      <parent link="${prefix}_motor"/>
+      <child link="${prefix}_wheel"/>
+      <origin xyz="${reflect*0.025} 0.02 0"/>
     </joint>
   </xacro:macro>
   <xacro:wheel prefix="left" reflect="-1"/> 
