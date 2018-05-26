@@ -1,5 +1,6 @@
 <launch>
 	<arg name="model" default="$(find rover)/urdf/rover.urdf"/>
+	<param name="robot_description" command="$(find xacro)/xacro.py $(arg model)" />
 
 	<!-- <node name="ultrasonic" pkg="rover" type="ultrasonic.py" output="screen" /> -->
 	<node name="left_encoder" pkg="rover" type="encoder.py" args="l" output="screen" />
