@@ -1,10 +1,36 @@
 <?xml version="1.0"?>
-<robot name="myfirst">
+<robot name="rover">
+  <material name="tan">
+    <color rgba="${245/255} ${222/255} ${179/255} 1"/>
+  </material>
+
+  <material name="green">
+    <color rgba="0 0.8 0 1"/>
+  </material>
+
   <link name="base_link">
     <visual>
       <geometry>
-        <cylinder length="0.6" radius="0.2"/>
+        <box size="0.14 0.2 0.01"/>
       </geometry>
+      <material name="tan"/>
     </visual>
   </link>
+
+  <link name="pi_link">
+    <visual>
+      <geometry>
+        <box size="0.12 0.15 0.05"/>
+      </geometry>
+      <origin rpy="0 0 0" xyz="0 0 0.03"/>
+      <material name="green"/>
+    </visual>
+  </link>
+
+  <joint name="base_to_pi" type="fixed">
+    <parent link="base_link"/>
+    <child link="pi_link"/>
+    <origin xyz="0 0 0"/>
+  </joint>
+  
 </robot>
