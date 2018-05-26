@@ -38,6 +38,22 @@
     <child link="pi_link"/>
     <origin xyz="0 0 0.03"/>
   </joint>
+
+  <link name="laser_frame">
+    <visual>
+      <geometry>
+        <cylinder length="0.03" radius="0.035"/>
+      </geometry>
+      <origin rpy="0 0 0" xyz="0 0 0"/>
+      <material name="tan"/>
+    </visual>
+  </link>
+
+  <joint name="pi_to_lidar" type="fixed">
+    <parent link="pi_link"/>
+    <child link="laser_frame"/>
+    <origin xyz="0 0.02 0.035"/>
+  </joint>
  
   <xacro:macro name="wheel" params="prefix reflect">
     <link name="${prefix}_motor">
