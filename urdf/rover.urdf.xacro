@@ -54,7 +54,7 @@
     <child link="laser_frame"/>
     <origin xyz="0 0.02 0.035"/>
   </joint>
- 
+
   <xacro:macro name="wheel" params="prefix reflect">
     <link name="${prefix}_motor">
       <visual>
@@ -82,9 +82,10 @@
       </visual>
     </link>
 
-    <joint name="${prefix}_motor_to_wheel" type="fixed">
+    <joint name="${prefix}_motor_to_wheel" type="continuous">
       <parent link="${prefix}_motor"/>
       <child link="${prefix}_wheel"/>
+      <axis xyz="1 0 0"/>
       <origin xyz="${reflect*0.025} 0.02 0"/>
     </joint>
   </xacro:macro>
