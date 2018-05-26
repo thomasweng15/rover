@@ -15,11 +15,14 @@ class Odom:
         self.odom_br = tf.TransformBroadcaster()
         self.hz = 20
 
+        self.vel_l = 0.0
+        self.vel_r = 0.0
+
     def _odom_l_cb(self, msg):
-        pass
+        self.vel_l = msg.data
 
     def _odom_r_cb(self, msg):
-        pass
+        self.vel_r = msg.data
 
     def run(self):
         x = 0.0
