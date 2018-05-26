@@ -48,9 +48,10 @@
     <joint name="base_to_${prefix}_motor" type="fixed">
       <parent link="base_link"/>
       <child link="${prefix}_motor"/>
-      <origin xyz="${reflect*0.06} 0 ${reflect*0.015}"/>
+      <origin xyz="${reflect*0.06} 0.02 -0.015"/>
     </joint>
   </xacro:macro>
   <xacro:wheel prefix="left" reflect="-1"/> 
+  <xacro:wheel prefix="right" reflect="1"/> 
 
 </robot>
