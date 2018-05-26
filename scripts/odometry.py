@@ -1,6 +1,7 @@
 #!/usr/bin/python
 import rospy
 import tf
+from std_msgs.msg import Float64
 from nav_msgs.msg import Odometry
 from geometry_msgs.msg import Point, Pose, Quaternion, Twist, Vector3
 
@@ -8,13 +9,22 @@ class Odom:
     def __init__(self):
         rospy.init_node("rvr_odom")
         self.pub = rospy.Publisher("odom", Odometry, queue_size=50)
+        self.sub_l = rospy.Subscriber("odom_vel_l", Float64, self._odom_l_cb)
+        self.sub_r = rospy.Subscriber("odom_vel_r", Float64, self._odom_r_cb)
         self.odom_br = tf.TransformBroadcaster()
 
         self.curr_time = rospy.Time.now()
         self.last_time = self.curr_time
+        self.hz = 20
+
+    def _odom_l_cb(self, msg):
+        pass
+
+    def _odom_r_cb(self, msg):
+        pass
 
     def run(self):
-        rate = rospy.Rate(0.1)
+        rate = rospy.Rate(self.hz)
         while not rospy.is_shutdown():
             self.curr_time = rospy.Time.now()
 
