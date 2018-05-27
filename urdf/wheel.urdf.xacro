@@ -1,6 +1,8 @@
 <?xml version="1.0"?>
 <robot xmlns:xacro="http://www.ros.org/wiki/xacro" name="wheel">
   <xacro:property name="pi" value="3.1415"/>
+  <xacro:property name="motor_d" value="0.02"/>
+  <xacro:property name="wheel_r" value="0.0325"/>
 
   <material name="yellow">
     <color rgba="0.8 0.8 0 1"/>
@@ -14,7 +16,7 @@
     <link name="${prefix}_motor">
       <visual>
         <geometry>
-          <box size="0.02 0.065 0.02"/>
+          <box size="0.02 0.065 ${motor_d}"/>
         </geometry>
         <origin rpy="0 0 0" xyz="0 0 0"/>
       	<material name="yellow"/>
@@ -30,7 +32,7 @@
     <link name="${prefix}_wheel">
       <visual>
         <geometry>
-          <cylinder length="0.027" radius="0.0325"/>
+          <cylinder length="0.027" radius="${wheel_r}"/>
         </geometry>
         <origin xyz="0 0 0" rpy="0 ${pi/2} 0"/>
         <material name="black"/>

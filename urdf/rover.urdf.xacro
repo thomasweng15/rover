@@ -3,6 +3,10 @@
 
   <xacro:include filename="$(find rover)/urdf/wheel.urdf.xacro"/>
 
+  <xacro:property name="base_d" value="0.01"/>
+  <xacro:property name="caster_r" value="0.01"/>
+  <xacro:property name="csupp_d" value="${wheel_r + 0.5*motor_d - 1.5*caster_r}"/>
+
   <material name="tan">
     <color rgba="${245/255} ${222/255} ${179/255} 1"/>
   </material>
@@ -15,6 +19,22 @@
       <material name="tan"/>
     </visual>
   </link>
+
+  <link name="base_footprint">
+    <visual>
+      <geometry>
+        <box size="0.001 0.001 0.001"/>
+      </geometry>
+      <origin xyz="0 0 0" rpy="0 0 0"/>
+      <material name="tan"/>
+    </visual>
+  </link>
+
+  <joint name="base_to_footprint" type="fixed">
+    <parent link="base_link"/>
+    <child link="base_footprint"/>
+    <origin xyz="0 0 ${-(0.5*base_d + 0.5*motor_d + wheel_r)}"/>
+  </joint>
 
   <link name="pi_link">
     <visual>
@@ -51,7 +71,7 @@
   <link name="caster_support">
     <visual>
       <geometry>
-        <box size="0.02 0.02 0.03"/>
+        <box size="0.02 0.02 ${csupp_d}"/>
       </geometry>
       <origin rpy="0 0 0" xyz="0 0 0"/>
       <material name="tan"/>
@@ -61,13 +81,13 @@
   <joint name="base_to_caster_support" type="fixed">
     <parent link="base_link"/>
     <child link="caster_support"/>
-    <origin xyz="0 -0.07 -0.02"/>
+    <origin xyz="0 -0.07 ${-(0.5*csupp_d + 0.5*base_d)}"/>
   </joint>
 
   <link name="caster_wheel">
     <visual>
       <geometry>
-        <sphere radius="0.01"/>
+        <sphere radius="${caster_r}"/>
       </geometry>
       <origin rpy="0 0 0" xyz="0 0 0"/>
       <material name="black"/>
@@ -77,7 +97,7 @@
   <joint name="caster_support_to_wheel" type="fixed">
     <parent link="caster_support"/>
     <child link="caster_wheel"/>
-    <origin xyz="0 0 -0.02"/>
+    <origin xyz="0 0 ${-(0.5*csupp_d + 0.5*caster_r)}"/>
   </joint>
 
   <xacro:wheel prefix="left" reflect="-1"/> 
