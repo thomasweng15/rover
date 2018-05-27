@@ -1,15 +1,10 @@
 <?xml version="1.0"?>
 <robot xmlns:xacro="http://www.ros.org/wiki/xacro" name="rover">
 
-  <xacro:include filename="$(find rover)/urdf/wheel.urdf.xacro"/>
+  <xacro:include filename="$(find rover)/urdf/motor_wheel.xacro"/>
+  <xacro:include filename="$(find rover)/urdf/caster_wheel.xacro"/>
 
   <xacro:property name="base_d" value="0.01"/>
-  <xacro:property name="caster_r" value="0.01"/>
-  <xacro:property name="csupp_d" value="${wheel_r + 0.5*motor_d - 1.5*caster_r}"/>
-
-  <material name="tan">
-    <color rgba="${245/255} ${222/255} ${179/255} 1"/>
-  </material>
 
   <link name="base_link">
     <visual>
@@ -68,39 +63,8 @@
     <origin xyz="0 0.02 0.035"/>
   </joint>
 
-  <link name="caster_support">
-    <visual>
-      <geometry>
-        <box size="0.02 0.02 ${csupp_d}"/>
-      </geometry>
-      <origin rpy="0 0 0" xyz="0 0 0"/>
-      <material name="tan"/>
-    </visual>
-  </link>
-
-  <joint name="base_to_caster_support" type="fixed">
-    <parent link="base_link"/>
-    <child link="caster_support"/>
-    <origin xyz="0 -0.07 ${-(0.5*csupp_d + 0.5*base_d)}"/>
-  </joint>
-
-  <link name="caster_wheel">
-    <visual>
-      <geometry>
-        <sphere radius="${caster_r}"/>
-      </geometry>
-      <origin rpy="0 0 0" xyz="0 0 0"/>
-      <material name="black"/>
-    </visual>
-  </link>
-
-  <joint name="caster_support_to_wheel" type="fixed">
-    <parent link="caster_support"/>
-    <child link="caster_wheel"/>
-    <origin xyz="0 0 ${-(0.5*csupp_d + 0.5*caster_r)}"/>
-  </joint>
-
-  <xacro:wheel prefix="left" reflect="-1"/> 
-  <xacro:wheel prefix="right" reflect="1"/> 
+  <xacro:casterwheel />
+  <xacro:motorwheel prefix="left" reflect="-1"/> 
+  <xacro:motorwheel prefix="right" reflect="1"/> 
 
 </robot>
