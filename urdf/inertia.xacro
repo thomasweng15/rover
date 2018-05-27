@@ -1,0 +1,10 @@
+<?xml version="1.0"?>
+<robot xmlns:xacro="http://www.ros.org/wiki/xacro" name="inertia">
+  <xacro:macro name="cuboid_i" params="m w h d">
+    <inertia ixx="${(1/12)*m*(h*h+d*d)}" ixy="0.0" ixz="0.0" iyy="${(1/12)*m*(w*w+d*d)}" iyz="0.0" izz="${(1/12)*m*(w*w+h*h)}"/>
+  </xacro:macro>
+
+  <xacro:macro name="cylinder_i" params="m l r">
+    <inertia ixx="${(1/12)*m*(3*r*r+l*l)}" ixy="0.0" ixz="0.0" iyy="${(1/12)*m*(3*r*r+l*l)}" iyz="0.0" izz="${(1/2)*m*r*r}"/>
+  </xacro:macro>
+</robot>

@@ -2,18 +2,32 @@
 <robot xmlns:xacro="http://www.ros.org/wiki/xacro" name="rover">
 
   <xacro:include filename="$(find rover)/urdf/colors.xacro"/>
+  <xacro:include filename="$(find rover)/urdf/inertia.xacro"/>
   <xacro:include filename="$(find rover)/urdf/motor_wheel.xacro"/>
   <xacro:include filename="$(find rover)/urdf/caster_wheel.xacro"/>
 
   <xacro:property name="base_d" value="0.01"/>
 
+  <xacro:property name="bl_m" value="0.1"/>
+  <xacro:property name="bl_w" value="0.14"/>
+  <xacro:property name="bl_h" value="0.20"/>
+  <xacro:property name="bl_d" value="0.01"/>
   <link name="base_link">
     <visual>
       <geometry>
-        <box size="0.14 0.20 0.01"/>
+        <box size="${bl_w} ${bl_h} ${bl_d}"/>
       </geometry>
       <material name="tan"/>
     </visual>
+    <collision>
+      <geometry>
+        <box size="${bl_w} ${bl_h} ${bl_d}"/>
+      </geometry>
+    </collision>
+    <inertial>
+      <mass value="${bl_m}"/>
+      <xacro:cuboid_i m="${bl_m}" w="${bl_w}" h="${bl_h}" d="${bl_d}"/>
+    </inertial>
   </link>
 
   <link name="base_footprint">
@@ -32,14 +46,27 @@
     <origin xyz="0 0 ${-(0.5*base_d + 0.5*motor_d + wheel_r)}"/>
   </joint>
 
+  <xacro:property name="p_m" value="0.4"/>
+  <xacro:property name="p_w" value="0.12"/>
+  <xacro:property name="p_h" value="0.15"/>
+  <xacro:property name="p_d" value="0.05"/>
   <link name="pi_link">
     <visual>
       <geometry>
-        <box size="0.12 0.15 0.05"/>
+        <box size="${p_w} ${p_h} ${p_d}"/>
       </geometry>
       <origin rpy="0 0 0" xyz="0 0 0"/>
       <material name="tan"/>
     </visual>
+    <collision>
+      <geometry>
+        <box size="${p_w} ${p_h} ${p_d}"/>
+      </geometry>
+    </collision>
+    <inertial>
+      <mass value="${p_m}"/>
+      <xacro:cuboid_i m="${p_m}" w="${p_w}" h="${p_h}" d="${p_d}"/>
+    </inertial>
   </link>
 
   <joint name="base_to_pi" type="fixed">
@@ -48,14 +75,26 @@
     <origin xyz="0 0 0.03"/>
   </joint>
 
+  <xacro:property name="l_m" value="0.2"/>
+  <xacro:property name="l_l" value="0.03"/>
+  <xacro:property name="l_r" value="0.035"/>
   <link name="laser_frame">
     <visual>
       <geometry>
-        <cylinder length="0.03" radius="0.035"/>
+        <cylinder length="${l_l}" radius="${l_r}"/>
       </geometry>
       <origin rpy="0 0 0" xyz="0 0 0"/>
       <material name="tan"/>
     </visual>
+    <collision>
+      <geometry>
+        <cylinder length="${l_l}" radius="${l_r}"/>
+      </geometry>
+    </collision>
+    <inertial>
+      <mass value="${l_m}"/>
+      <xacro:cylinder_i m="${l_m}" l="${l_l}" r="${l_r}"/>
+    </inertial>
   </link>
 
   <joint name="pi_to_lidar" type="fixed">
