@@ -1,18 +1,32 @@
 <?xml version="1.0"?>
 <robot xmlns:xacro="http://www.ros.org/wiki/xacro" name="motorwheel">
   <xacro:property name="pi" value="3.1415"/>
-  <xacro:property name="motor_d" value="0.02"/>
-  <xacro:property name="wheel_r" value="0.0325"/>
 
+  <xacro:property name="m_m" value="0.02"/>
+  <xacro:property name="m_w" value="0.02"/>
+  <xacro:property name="m_h" value="0.065"/>
+  <xacro:property name="m_d" value="0.02"/>
+  <xacro:property name="w_m" value="0.01"/>
+  <xacro:property name="w_r" value="0.0325"/>
+  <xacro:property name="w_l" value="0.027"/>
   <xacro:macro name="motorwheel" params="prefix reflect">
     <link name="${prefix}_motor">
       <visual>
         <geometry>
-          <box size="0.02 0.065 ${motor_d}"/>
+          <box size="${m_w} ${m_h} ${m_d}"/>
         </geometry>
         <origin rpy="0 0 0" xyz="0 0 0"/>
       	<material name="yellow"/>
       </visual>
+      <collision>
+        <geometry>
+          <box size="${m_w} ${m_h} ${m_d}"/>
+        </geometry>
+      </collision>
+      <inertial>
+        <mass value="${m_m}"/>
+        <xacro:cuboid_i m="${m_m}" w="${m_w}" h="${m_h}" d="${m_d}"/>
+      </inertial>
     </link>
     
     <joint name="base_to_${prefix}_motor" type="fixed">
@@ -24,11 +38,20 @@
     <link name="${prefix}_wheel">
       <visual>
         <geometry>
-          <cylinder length="0.027" radius="${wheel_r}"/>
+          <cylinder length="${w_l}" radius="${w_r}"/>
         </geometry>
         <origin xyz="0 0 0" rpy="0 ${pi/2} 0"/>
         <material name="black"/>
       </visual>
+      <collision>
+         <geometry>
+           <cylinder length="${w_l}" radius="${w_r}"/>
+         </geometry>
+      </collision>
+      <inertial>
+        <mass value="${w_m}"/>
+        <xacro:cylinder_i m="${w_m}" l="${w_l}" r="${w_r}"/>
+      </inertial>
     </link>
 
     <joint name="${prefix}_motor_to_wheel" type="continuous">

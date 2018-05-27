@@ -43,7 +43,7 @@
   <joint name="base_to_footprint" type="fixed">
     <parent link="base_link"/>
     <child link="base_footprint"/>
-    <origin xyz="0 0 ${-(0.5*base_d + 0.5*motor_d + wheel_r)}"/>
+    <origin xyz="0 0 ${-(0.5*base_d + 0.5*m_d + w_r)}"/>
   </joint>
 
   <xacro:property name="p_m" value="0.4"/>
