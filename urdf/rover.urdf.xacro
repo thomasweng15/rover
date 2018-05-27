@@ -1,6 +1,7 @@
 <?xml version="1.0"?>
 <robot xmlns:xacro="http://www.ros.org/wiki/xacro" name="rover">
 
+  <xacro:include filename="$(find rover)/urdf/colors.xacro"/>
   <xacro:include filename="$(find rover)/urdf/motor_wheel.xacro"/>
   <xacro:include filename="$(find rover)/urdf/caster_wheel.xacro"/>
 

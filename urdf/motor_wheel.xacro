@@ -4,14 +4,6 @@
   <xacro:property name="motor_d" value="0.02"/>
   <xacro:property name="wheel_r" value="0.0325"/>
 
-  <material name="yellow">
-    <color rgba="0.8 0.8 0 1"/>
-  </material>
-
-  <material name="black">
-    <color rgba="0 0 0 1"/>
-  </material>
-
   <xacro:macro name="motorwheel" params="prefix reflect">
     <link name="${prefix}_motor">
       <visual>

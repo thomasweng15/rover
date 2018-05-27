@@ -4,10 +4,6 @@
   <xacro:property name="caster_r" value="0.01"/>
   <xacro:property name="csupp_d" value="${wheel_r + 0.5*motor_d - 1.5*caster_r}"/>
 
-  <material name="tan">
-    <color rgba="${245/255} ${222/255} ${179/255} 1"/>
-  </material>
-
   <link name="caster_support">
     <visual>
       <geometry>
