@@ -2,7 +2,7 @@
 
 import RPi.GPIO as GPIO
 from config import Config
-from std_msgs.msg import Float64
+from std_msgs.msg import Float64, Bool
 import rospy
 import json
 import sys
@@ -21,17 +21,9 @@ class Encoder:
 
         self.pin_val = 0
 
-        self.curr_time = rospy.Time.now()
-        self.prev_time = self.curr_time
-        self.duration = rospy.Duration.from_sec(DURATION)
-
         self.is_moving_forward = True
-        self.forward_ticks = []
-        self.backward_ticks = []
-        self.meters_per_tick = METERS_PER_TICK
-        self.meters_per_sec = 0.0
 
-        self.pub = rospy.Publisher("odom_vel_" + enc_id, Float64, queue_size=50)
+        self.pub = rospy.Publisher("odom_vel_" + enc_id, Bool, queue_size=50)
         self.sub = rospy.Subscriber("cmd_vel_" + enc_id, Float64, self._cmd_vel_cb)
         rospy.on_shutdown(self._shutdown_callback)
 
@@ -55,57 +47,26 @@ class Encoder:
         return pin
 
     def _check_for_tick(self):
-        self.prev_time = self.curr_time
-        self.curr_time = rospy.Time.now()
+        curr_time = rospy.Time.now()
 
         new_pin_val = GPIO.input(self.pin)
         tick_detected = self.pin_val == 0 and new_pin_val == 1
         self.pin_val = new_pin_val
 
-        return tick_detected
+        return curr_time if tick_detected else None
 
-    def _add_tick_to_queue(self):
-        if self.is_moving_forward: 
-            self.forward_ticks.append(self.curr_time)
-        else:
-            self.backward_ticks.append(self.curr_time)
-
-    def _clean_queue(self):
-        expiration = self.curr_time - self.duration
-        self._remove_expired_ticks(self.forward_ticks, expiration)
-        self._remove_expired_ticks(self.backward_ticks, expiration)
-
-    def _remove_expired_ticks(self, queue, expiration):
-        index = None
-        for i, ts in enumerate(queue):
-            if ts < expiration:
-                index = i
-                break
-        
-        if index != None:
-            del queue[i:]
-
-    def _calculate_velocity(self):
-        total_ticks = len(self.forward_ticks) - len(self.backward_ticks)
-        distance = total_ticks * self.meters_per_tick
-        self.meters_per_sec = distance * (1.0 / DURATION)
-
-    def _publish_velocity(self):
-        msg = Float64()
-        msg.data = self.meters_per_sec
+    def _publish_tick(self, timestamp):
+        msg = Bool()
+        msg.header = timestamp
+        msg.data = self.is_moving_forward
         self.pub.publish(msg)
 
     def run(self):
         rate = rospy.Rate(RATE)
         while not rospy.is_shutdown():
-            tick_detected = self._check_for_tick()
-            if tick_detected:
-                self._add_tick_to_queue()
-
-            self._clean_queue()
-
-            self._calculate_velocity()
-            self._publish_velocity()
+            timestamp = self._check_for_tick()
+            if timestamp:
+                self._publish_tick(timestamp)
 
             rate.sleep()
 
