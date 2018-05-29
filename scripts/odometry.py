@@ -39,6 +39,8 @@ class Odom:
         self.y = 0.0
         self.th = 0.0
         self.hz = 20
+        self.wheel_radius = 0.03175
+        self.wheel_separation = 0.14
 
         self.pub = rospy.Publisher("odom", Odometry, queue_size=50)
         self.sub_l = rospy.Subscriber("encoder_l", BoolStamped, self.wheel_l.cb)
@@ -48,10 +50,12 @@ class Odom:
     def _compute_velocity(self, dt):
         v_l = self.wheel_l.compute_velocity(dt)
         v_r = self.wheel_r.compute_velocity(dt)
+        
+        vx = (self.wheel_radius / 2) * (v_l + v_r) * math.cos(self.th)
+        vy = (self.wheel_radius / 2) * (v_l + v_r) * math.sin(self.th)
+        vth = (self.wheel_radius / self.wheel_separation) * (v_r - v_l)
 
-        # TODO
-
-        return 0.1, 0.0, 0.0
+        return vx, vy, vth
 
     def _update_position(self, dt, vx, vy, vth):
         delta_x = (vx * math.cos(self.th) - vy * math.sin(self.th)) * dt
