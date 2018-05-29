@@ -2,7 +2,8 @@
 
 import RPi.GPIO as GPIO
 from config import Config
-from std_msgs.msg import Float64, Bool
+from std_msgs.msg import Float64
+from rover.msg import BoolStamped
 import rospy
 import json
 import sys
@@ -56,7 +57,7 @@ class Encoder:
         return curr_time if tick_detected else None
 
     def _publish_tick(self, timestamp):
-        msg = Bool()
+        msg = BoolStamped()
         msg.header = timestamp
         msg.data = self.is_moving_forward
         self.pub.publish(msg)
