@@ -9,8 +9,6 @@ import json
 import sys
 
 RATE=20 # num per second
-DURATION=0.2 # seconds
-METERS_PER_TICK=0.3175
 
 class Encoder:
     def __init__(self, enc_id):
@@ -24,7 +22,7 @@ class Encoder:
 
         self.is_moving_forward = True
 
-        self.pub = rospy.Publisher("odom_vel_" + enc_id, Bool, queue_size=50)
+        self.pub = rospy.Publisher("encoder_" + enc_id, BoolStamped, queue_size=50)
         self.sub = rospy.Subscriber("cmd_vel_" + enc_id, Float64, self._cmd_vel_cb)
         rospy.on_shutdown(self._shutdown_callback)
 
@@ -58,8 +56,8 @@ class Encoder:
 
     def _publish_tick(self, timestamp):
         msg = BoolStamped()
-        msg.header = timestamp
-        msg.data = self.is_moving_forward
+        msg.header.stamp = timestamp
+        msg.is_forward.data = self.is_moving_forward
         self.pub.publish(msg)
 
     def run(self):

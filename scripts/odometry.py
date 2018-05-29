@@ -2,27 +2,43 @@
 import rospy
 import tf
 import math
-from std_msgs.msg import Float64
+from rover.msg import BoolStamped
 from nav_msgs.msg import Odometry
 from geometry_msgs.msg import Point, Pose, Quaternion, Twist, Vector3
 
 class Odom:
     def __init__(self):
         rospy.init_node("rvr_odom")
+
+        self.f_ticks_l = []
+        self.f_ticks_r = []
+
+        self.b_ticks_l = []
+        self.b_ticks_r = []
+
         self.pub = rospy.Publisher("odom", Odometry, queue_size=50)
-        self.sub_l = rospy.Subscriber("odom_vel_l", Float64, self._odom_l_cb)
-        self.sub_r = rospy.Subscriber("odom_vel_r", Float64, self._odom_r_cb)
+        self.sub_l = rospy.Subscriber("encoder_l", BoolStamped, self._enc_l_cb)
+        self.sub_r = rospy.Subscriber("encoder_r", BoolStamped, self._enc_r_cb)
         self.odom_br = tf.TransformBroadcaster()
         self.hz = 20
 
-        self.vel_l = 0.0
-        self.vel_r = 0.0
+    def _enc_l_cb(self, msg):
+        if msg.data:
+            self.f_ticks_l.append(msg.header.stamp)
+        else:
+            self.b_ticks_l.append(msg.header.stamp)
 
-    def _odom_l_cb(self, msg):
-        self.vel_l = msg.data
+    def _enc_r_cb(self, msg):
+        if msg.data:
+            self.f_ticks_r.append(msg.header.stamp)
+        else:
+            self.b_ticks_r.append(msg.header.stamp)
 
-    def _odom_r_cb(self, msg):
-        self.vel_r = msg.data
+    def _clear_queues(self):
+        self.f_ticks_l = []
+        self.b_ticks_l = []
+        self.f_ticks_r = []
+        self.b_ticks_r = []
 
     def run(self):
         x = 0.0
@@ -78,6 +94,7 @@ class Odom:
             self.pub.publish(odom)
 
             self.last_time = self.curr_time
+            self._clear_queues()
             rate.sleep()
 
 if __name__ == "__main__":
