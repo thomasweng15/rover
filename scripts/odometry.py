@@ -13,7 +13,7 @@ class WheelOdom:
         self.meters_per_tick = 0.3175
 
     def cb(self, msg):
-        if msg.data:
+        if msg.is_forward.data:
             self.forward_ticks.append(msg.header.stamp)
         else:
             self.backward_ticks.append(msg.header.stamp)
@@ -45,18 +45,17 @@ class Odom:
         self.sub_r = rospy.Subscriber("encoder_r", BoolStamped, self.wheel_r.cb)
         self.odom_br = tf.TransformBroadcaster()
 
-    def _compute_velocity(self, duration):
-        v_l = self.wheel_l.compute_velocity(duration)
-        v_r = self.wheel_r.compute_velocity(duration)
+    def _compute_velocity(self, dt):
+        v_l = self.wheel_l.compute_velocity(dt)
+        v_r = self.wheel_r.compute_velocity(dt)
 
         # TODO
 
         return 0.1, 0.0, 0.0
 
-    def _update_position(self, duration, vx, vy, vth):
-        dt = duration.to_sec()
-        delta_x = (vx * math.cos(th) - vy * math.sin(th)) * dt
-        delta_y = (vx * math.sin(th) + vy * math.cos(th)) * dt
+    def _update_position(self, dt, vx, vy, vth):
+        delta_x = (vx * math.cos(self.th) - vy * math.sin(self.th)) * dt
+        delta_y = (vx * math.sin(self.th) + vy * math.cos(self.th)) * dt
         delta_th = vth * dt
         self.x += delta_x
         self.y += delta_y
@@ -69,10 +68,10 @@ class Odom:
         rate = rospy.Rate(self.hz)
         while not rospy.is_shutdown():
             self.curr_time = rospy.Time.now()
-            duration = self.curr_time - self.last_time
+            dt = (self.curr_time - self.last_time).to_sec()
 
-            vx, vy, vth = self._compute_velocity(duration)
-            self._update_position(duration, vx, vy, vth)
+            vx, vy, vth = self._compute_velocity(dt)
+            self._update_position(dt, vx, vy, vth)
 
             # since all odometry is 6DOF we'll need a quaternion created from yaw
             odom_quat = tf.transformations.quaternion_from_euler(0, 0, self.th)
