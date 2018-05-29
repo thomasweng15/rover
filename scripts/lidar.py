@@ -4,6 +4,7 @@ from sensor_msgs.msg import LaserScan
 import rospy
 import serial
 import sys
+import math
 
 COM_PORT = "/dev/ttyACM0"
 BAUDRATE = 115200
@@ -39,14 +40,14 @@ class Lidar:
 		
 		scan = LaserScan()
 		scan.header.frame_id = "laser_frame"
-		scan.angle_min = -3.14
-		scan.angle_max = 3.14
-		scan.angle_increment = 3.14 / 360
+		scan.angle_min = 0
+		scan.angle_max = 2.0*math.pi
+		scan.angle_increment = 2.0*math.pi / num_readings
 		scan.time_increment = 0.2 / num_readings
 		scan.range_min = 0.0
 		scan.range_max = 5.0
-		scan.ranges = [0.0 for i in xrange(360)]
-		scan.intensities = [0.0 for j in xrange(360)] 
+		scan.ranges = [0.0 for i in xrange(num_readings)]
+		scan.intensities = [0.0 for j in xrange(num_readings)] 
 		return scan
 
 	def _update_scan(self, angle, dist_mm, quality):
