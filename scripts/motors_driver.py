@@ -48,13 +48,21 @@ class MotorsDriver:
         GPIO.cleanup()
 
     def _telop_callback(self, msg):
-        linear = msg.linear
+        """
+        Move forward at constant speed.
+        If angular velocity is present, turn at constant speed instead.
+        """
+        x = msg.linear.x
+        th = msg.angular.z
 
-        self._pub_vel_l.publish(Float64(linear.x))
-        self._pub_vel_r.publish(Float64(linear.x))
-
-        self._left.update(abs(linear.x*100), linear.x >= 0)
-        self._right.update(abs(linear.x*100), linear.x >= 0)
+        vel_l = x if th == 0 else x/2 * (th/th)
+        vel_r = x if th == 0 else x/2 * -(th/th)
+        self._pub_vel_l.publish(Float64(vel_l))
+        self._pub_vel_r.publish(Float64(vel_r))
+        
+        power = 50 if th == 0 else 25
+        self._left.update(power, vel_l >= 0)
+        self._right.update(power, vel_r >= 0)
 
     def stop(self):
         self._left.stop()
