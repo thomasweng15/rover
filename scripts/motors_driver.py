@@ -55,12 +55,19 @@ class MotorsDriver:
         x = msg.linear.x
         th = msg.angular.z
 
-        vel_l = x if th == 0 else x/2 * (th/th)
-        vel_r = x if th == 0 else x/2 * -(th/th)
+        vel_l = 0
+        vel_r = 0
+        if th == 0:
+            vel_l = x
+            vel_r = x
+        elif th != 0:
+            vel_l = th
+            vel_r = -th
+
         self._pub_vel_l.publish(Float64(vel_l))
         self._pub_vel_r.publish(Float64(vel_r))
         
-        power = 50 if th == 0 else 25
+        power = 0 if th == 0 and x == 0 else 75
         self._left.update(power, vel_l >= 0)
         self._right.update(power, vel_r >= 0)
 
