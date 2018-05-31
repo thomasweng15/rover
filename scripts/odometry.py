@@ -48,6 +48,8 @@ class Odom:
         self.odom_br = tf.TransformBroadcaster()
 
     def _compute_velocity(self, dt):
+        """http://planning.cs.uiuc.edu/node659.html
+        """
         v_l = self.wheel_l.compute_velocity(dt)
         v_r = self.wheel_r.compute_velocity(dt)
         
