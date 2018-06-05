@@ -1,10 +1,12 @@
 <?xml version="1.0"?>
 <robot xmlns:xacro="http://www.ros.org/wiki/xacro" name="casterwheel">
+  <xacro:property name="cs_m" value="0.05"/>
+  <xacro:property name="cs_w" value="0.02"/>
+  <xacro:property name="cs_h" value="0.02"/>
+  <xacro:property name="cs_d" value="${w_r + 0.5*m_d - 1.5*cw_r}"/>
+  <xacro:property name="cw_m" value="0.05"/>
+  <xacro:property name="cw_r" value="0.01"/>
   <xacro:macro name="casterwheel" params="">
-		<xacro:property name="cs_m" value="0.05"/>
-		<xacro:property name="cs_w" value="0.02"/>
-		<xacro:property name="cs_h" value="0.02"/>
-		<xacro:property name="cs_d" value="${w_r + 0.5*m_d - 1.5*cw_r}"/>
 		<link name="caster_support">
 			<visual>
 				<geometry>
@@ -30,8 +32,6 @@
 			<origin xyz="0 -0.07 ${-(0.5*cs_d + 0.5*base_d)}"/>
 		</joint>
 
-		<xacro:property name="cw_m" value="0.05"/>
-		<xacro:property name="cw_r" value="0.01"/>
 		<link name="caster_wheel">
 			<visual>
 				<geometry>

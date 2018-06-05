@@ -54,7 +54,7 @@
       </inertial>
     </link>
 
-    <joint name="${prefix}_motor_to_wheel" type="continuous">
+    <joint name="${prefix}_motor_to_wheel" type="fixed">
       <parent link="${prefix}_motor"/>
       <child link="${prefix}_wheel"/>
       <axis xyz="1 0 0"/>

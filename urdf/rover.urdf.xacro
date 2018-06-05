@@ -78,7 +78,7 @@
   <xacro:property name="l_m" value="0.2"/>
   <xacro:property name="l_l" value="0.03"/>
   <xacro:property name="l_r" value="0.035"/>
-  <link name="laser_frame">
+  <link name="laser_frame1">
     <visual>
       <geometry>
         <cylinder length="${l_l}" radius="${l_r}"/>
@@ -99,12 +99,12 @@
 
   <joint name="pi_to_lidar" type="fixed">
     <parent link="pi_link"/>
-    <child link="laser_frame"/>
-    <origin xyz="0 0.02 0.035"/>
+    <child link="laser_frame1"/>
+    <origin xyz="0 0.02 0.035" rpy="0 0 ${pi/2}"/>
   </joint>
 
-  <xacro:casterwheel />
   <xacro:motorwheel prefix="left" reflect="-1"/> 
   <xacro:motorwheel prefix="right" reflect="1"/> 
+  <xacro:casterwheel />
 
 </robot>
