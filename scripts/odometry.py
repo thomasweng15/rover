@@ -10,7 +10,7 @@ class WheelOdom:
     def __init__(self):
         self.forward_ticks = []
         self.backward_ticks = []
-        self.meters_per_tick = 0.01
+        self.rad_per_tick = rospy.get_param("rpt", 0.31415)
 
     def cb(self, msg):
         if msg.is_forward.data:
@@ -20,9 +20,9 @@ class WheelOdom:
 
     def compute_velocity(self, duration):
         total_ticks = len(self.forward_ticks) - len(self.backward_ticks)
-        distance = total_ticks * self.meters_per_tick
-        meters_per_sec = distance * (1.0 / duration)
-        return meters_per_sec
+        distance = total_ticks * rospy.get_param("rpt", 0.31415)
+        rad_per_sec = distance / duration
+        return rad_per_sec
 
     def clear_queue(self):
         self.forward_ticks = []
@@ -38,9 +38,9 @@ class Odom:
         self.x = 0.0
         self.y = 0.0
         self.th = 0.0
-        self.hz = 25
+        self.hz = 5
         self.wheel_radius = 0.03175
-        self.wheel_separation = 0.14
+        self.wheel_separation = 0.1397
 
         self.pub = rospy.Publisher("odom", Odometry, queue_size=50)
         self.sub_l = rospy.Subscriber("encoder_l", BoolStamped, self.wheel_l.cb)
@@ -60,8 +60,8 @@ class Odom:
         return vx, vy, vth
 
     def _update_position(self, dt, vx, vy, vth):
-        delta_x = (vx * math.cos(self.th) - vy * math.sin(self.th)) * dt
-        delta_y = (vx * math.sin(self.th) + vy * math.cos(self.th)) * dt
+        delta_x = vx * dt
+        delta_y = vy * dt
         delta_th = vth * dt
         self.x += delta_x
         self.y += delta_y
