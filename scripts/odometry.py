@@ -10,7 +10,7 @@ class WheelOdom:
     def __init__(self):
         self.forward_ticks = []
         self.backward_ticks = []
-        self.meters_per_tick = 0.3175
+        self.meters_per_tick = 0.01
 
     def cb(self, msg):
         if msg.is_forward.data:
@@ -38,7 +38,7 @@ class Odom:
         self.x = 0.0
         self.y = 0.0
         self.th = 0.0
-        self.hz = 20
+        self.hz = 25
         self.wheel_radius = 0.03175
         self.wheel_separation = 0.14
 

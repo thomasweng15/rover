@@ -8,7 +8,7 @@ import rospy
 import json
 import sys
 
-RATE=20 # num per second
+RATE=50 # num per second
 
 class Encoder:
     def __init__(self, enc_id):
