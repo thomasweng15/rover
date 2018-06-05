@@ -59,11 +59,11 @@ Visualization Manager:
       Class: rviz/LaserScan
       Color: 255; 255; 255
       Color Transformer: Intensity
-      Decay Time: 0
+      Decay Time: 0.2
       Enabled: true
       Invert Rainbow: false
       Max Color: 255; 255; 255
-      Max Intensity: 649
+      Max Intensity: 409
       Min Color: 0; 0; 0
       Min Intensity: 0
       Name: LaserScan
@@ -150,7 +150,7 @@ Visualization Manager:
       Color: 255; 25; 0
       Enabled: true
       Keep: 10
-      Length: 0.1
+      Length: 0.25
       Name: Odometry
       Position Tolerance: 0.02
       Topic: odom
@@ -174,7 +174,7 @@ Visualization Manager:
   Enabled: true
   Global Options:
     Background Color: 48; 48; 48
-    Fixed Frame: base_footprint
+    Fixed Frame: odom
     Frame Rate: 30
   Name: root
   Tools:
@@ -195,7 +195,7 @@ Visualization Manager:
   Views:
     Current:
       Class: rviz/Orbit
-      Distance: 4.5189
+      Distance: 6.97663
       Enable Stereo Rendering:
         Stereo Eye Separation: 0.06
         Stereo Focal Distance: 1
@@ -207,10 +207,10 @@ Visualization Manager:
         Z: 0
       Name: Current View
       Near Clip Distance: 0.01
-      Pitch: 1.5548
+      Pitch: 1.5698
       Target Frame: <Fixed Frame>
       Value: Orbit (rviz)
-      Yaw: 6.23724
+      Yaw: 3.42224
     Saved: ~
 Window Geometry:
   Displays:
