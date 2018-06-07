@@ -57,6 +57,9 @@ class Odom:
         vy = (self.wheel_radius / 2) * (v_l + v_r) * math.sin(self.th)
         vth = (self.wheel_radius / self.wheel_separation) * (v_r - v_l)
 
+        # apply offset from calibration
+        vth += 0.128*vth 
+        
         return vx, vy, vth
 
     def _update_position(self, dt, vx, vy, vth):
@@ -78,7 +81,7 @@ class Odom:
 
             vx, vy, vth = self._compute_velocity(dt)
             self._update_position(dt, vx, vy, vth)
-
+            
             # since all odometry is 6DOF we'll need a quaternion created from yaw
             odom_quat = tf.transformations.quaternion_from_euler(0, 0, self.th)
 
