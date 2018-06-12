@@ -10,7 +10,7 @@ import json
 
 class MotorsDriver:
     def __init__(self):
-        rospy.init_node("rvr_motors")
+        rospy.init_node("motors")
         
         if self._set_pins() == False:
             rospy.logerr("Setting pins for motors failed")
