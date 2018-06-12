@@ -10,7 +10,7 @@ class WheelOdom:
     def __init__(self):
         self.forward_ticks = []
         self.backward_ticks = []
-        self.rad_per_tick = rospy.get_param("rpt", 0.31415)
+        self.rad_per_tick = 2*math.pi/20
 
     def cb(self, msg):
         if msg.is_forward.data:
@@ -20,7 +20,7 @@ class WheelOdom:
 
     def compute_velocity(self, duration):
         total_ticks = len(self.forward_ticks) - len(self.backward_ticks)
-        distance = total_ticks * rospy.get_param("rpt", 0.31415)
+        distance = total_ticks * self.rad_per_tick
         rad_per_sec = distance / duration
         return rad_per_sec
 
