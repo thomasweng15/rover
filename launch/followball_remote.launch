@@ -1,4 +1,5 @@
 <launch>
 	<node name="rviz" pkg="rviz" type="rviz" args="-d $(find rover)/config.rviz"/>
+	<node name="follow_ball" pkg="rover" type="follow_ball.py" output="screen" />
 	<node name="republish" type="republish" pkg="image_transport" output="screen" args="compressed in:=/raspicam_node/image raw out:=/camera/image" />
 </launch>

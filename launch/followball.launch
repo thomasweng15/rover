@@ -1,6 +1,5 @@
 <launch>
     <node name="steering" pkg="rover" type="steering.py" output="screen" />
-    <node name="follow_ball" pkg="rover" type="follow_ball.py" output="screen" />
 
     <include file="$(find raspicam_node)/launch/camerav2_410x308_30fps.launch" />
 </launch>
