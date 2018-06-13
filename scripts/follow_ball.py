@@ -1,50 +1,55 @@
+#!/usr/bin/python
+import cv2
 import rospy
 import numpy as np
 from sensor_msgs.msg import Image
 from geometry_msgs.msg import Twist
 from cv_bridge import CvBridge, CvBridgeError
 
-class MoveAPI:
-    Idle, Forward, Rotate = range(3)
-
+class MoveApi:
     def __init__(self):
         self.pub = rospy.Publisher("cmd_vel", Twist, queue_size=10)
-        self.state = Idle
+
+        self.IDLE = 0
+        self.FORWARD = 1
+        self.ROTATE = 2
+        self.state = self.IDLE
 
     def idle(self):
-        if self.state == Idle:
+        if self.state == self.IDLE:
             return
 
         msg = Twist(Vector3(0, 0, 0), Vector3(0, 0, 0))
         self.pub.publish(msg)
-        self.state = Idle
+        self.state = self.IDLE
 
     def forward(self):
-        if self.state == Forward:
+        if self.state == self.FORWARD:
             return
 
         msg = Twist(Vector3(0.2, 0, 0), Vector3(0, 0, 0))
         self.pub.publish(msg)
-        self.state == Forward
+        self.state == self.FORWARD
 
     def rotate(self, clockwise=True):
-        if self.state == Rotate:
+        if self.state == self.ROTATE:
             return
 
         msg = Twist(Vector3(0, 0, 0), Vector3(0, 0, 0.5))
         self.pub.publish(msg)
-        self.state == Rotate
+        self.state == self.ROTATE
 
 class FollowBall:
     def __init__(self):
+        rospy.init_node("follow_ball")
         self.move = MoveApi()
         self.sub = rospy.Subscriber("camera/image", Image, self.cb)
-        self.pub = rospy.Publisher("processed/image", Twist, queue_size=10)
+        self.pub = rospy.Publisher("processed/image", Image, queue_size=10)
         self.bridge = CvBridge()
         self.im = np.zeros([410,308,3], dtype=np.uint8)
         self.greenLower = (29, 86, 6)
         self.greenUpper = (64, 255, 255)
-        self.circle = { center: None, radius: 0 }
+        self.circle = { 'center': None, 'radius': 0 }
 
     def cb(self, data):
         try: 
@@ -57,7 +62,7 @@ class FollowBall:
         """
         # blur frame and convert to HSV
         blurred = cv2.GaussianBlur(self.im, (11, 11), 0)
-        hsv = cv2.cv2Color(blurred, cv2.COLOR_BGR2HSV)
+        hsv = cv2.cvtColor(blurred, cv2.COLOR_BGR2HSV)
 
         # Construct mask for color green and apply to im
         mask = cv2.inRange(hsv, self.greenLower, self.greenUpper)
@@ -68,8 +73,9 @@ class FollowBall:
         # (x, y) center of the ball
         cnts = cv2.findContours(mask.copy(), cv2.RETR_EXTERNAL,
             cv2.CHAIN_APPROX_SIMPLE)
-        cnts = cnts[0] if imutils.is_cv2() else cnts[1]
+        cnts = cnts[1]
         center = None
+        radius = 0
 
         # only proceed if at least one contour was found
         if len(cnts) > 0:
@@ -86,34 +92,33 @@ class FollowBall:
                     (0, 255, 255), 2)
                 cv2.circle(self.im, center, 5, (0, 0, 255), -1)
 
-        self.circle.center = center
-        self.circle.radius = radius
+        self.circle['center'] = center
+        self.circle['radius'] = radius
 
     def publish_image(self):
         try:
-            self.pub.publish(self.bridge.cv2_to_imgmsg(cv_image, "bgr8"))
+            self.pub.publish(self.bridge.cv2_to_imgmsg(self.im, "bgr8"))
         except CvBridgeError as e:
             print(e)
 
     def publish_action(self):
-        if self.circle.center is None:
+        if self.circle['center'] is None:
             self.move.idle()
             return
         
-        if self.circle.radius > 150:
+        if self.circle['radius'] > 150:
             # stop
             return 
 
-        if abs(self.circle.center[0] - 200) < 50:
+        if abs(self.circle['center'][0] - 200) < 50:
             # drive toward 
             return 
 
         # otherwise rotate so ball is close to center
 
     def run(self):
-        r = rospy.rate(10)
+        r = rospy.Rate(10)
         while not rospy.is_shutdown():
-            rospy.spinOnce()
             self.process_image()
             self.publish_image()
             self.publish_action()
