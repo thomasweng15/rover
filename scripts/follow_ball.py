@@ -8,6 +8,7 @@ class FollowBall:
     def __init__(self):
         self.sub = rospy.Subscriber("camera/image", Image, self.cb)
         self.pub = rospy.Publisher("cmd_vel", Twist, queue_size=10)
+        self.im_pub = rospy.Publisher("processed/image", Twist, queue_size=10)
         self.bridge = CvBridge()
         self.im = np.zeros([410,308,3], dtype=np.uint8)
         self.greenLower = (29, 86, 6)
@@ -53,6 +54,15 @@ class FollowBall:
                     (0, 255, 255), 2)
                 cv2.circle(self.im, center, 5, (0, 0, 255), -1)
 
+    def publish_image(self):
+        try:
+            self.im_pub.publish(self.bridge.cv2_to_imgmsg(cv_image, "bgr8"))
+        except CvBridgeError as e:
+            print(e)
+
+    def compute_action(self):
+        pass
+
     def publish_action(self):
         pass
 
@@ -61,6 +71,8 @@ class FollowBall:
         while not rospy.is_shutdown():
             rospy.spinOnce()
             self.process_image()
+            self.publish_image()
+            self.compute_action()
             self.publish_action()
             r.sleep()
 
