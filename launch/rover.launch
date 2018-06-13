@@ -8,4 +8,8 @@
 	<node pkg="tf" type="static_transform_publisher" name="laser_frame_broadcaster" args="0 0 0.035 0 0 0 base_link laser_frame 100" />
 
 	<include file="$(find raspicam_node)/launch/camerav2_410x308_30fps.launch" />
+	
+	<!-- map server -->
+	<arg name="map_file" default="$(find rover)/map3_cleaned.yaml" />
+	<node name="map_server" pkg="map_server" type="map_server" args="$(arg map_file)"/>
 </launch>

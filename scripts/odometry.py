@@ -38,7 +38,7 @@ class Odom:
         self.x = 0.0
         self.y = 0.0
         self.th = 0.0
-        self.hz = 5
+        self.hz = 100
         self.wheel_radius = 0.03175
         self.wheel_separation = 0.1397
 
@@ -58,7 +58,7 @@ class Odom:
         vth = (self.wheel_radius / self.wheel_separation) * (v_r - v_l)
 
         # apply offset from calibration
-        vth += 0.128*vth 
+        # vth += 0.128*vth 
         
         return vx, vy, vth
 
