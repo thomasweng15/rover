@@ -13,8 +13,8 @@ PULSE_RATE = 10000
 
 class Ultrasonic:
     def __init__(self):
-        rospy.init_node("rvr_ultrasonic", disable_signals=True) 
-        self._pub = rospy.Publisher("rvr_ultrasonic", String, queue_size=50)
+        rospy.init_node("ultrasonic", disable_signals=True) 
+        self._pub = rospy.Publisher("ultrasonic", String, queue_size=50)
 
         self.read_rate = rospy.Rate(READ_RATE)
         self.pulse_rate = rospy.Rate(PULSE_RATE)

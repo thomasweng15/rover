@@ -30,7 +30,7 @@ class WheelOdom:
 
 class Odom:
     def __init__(self):
-        rospy.init_node("rvr_odom")
+        rospy.init_node("odom")
 
         self.wheel_l = WheelOdom()
         self.wheel_r = WheelOdom()

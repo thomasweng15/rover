@@ -11,7 +11,7 @@ BAUDRATE = 115200
 
 class Lidar:
 	def __init__(self, com_port, baudrate):
-		rospy.init_node("rvr_lidar")
+		rospy.init_node("lidar")
 
 		self.pub = rospy.Publisher("scan", LaserScan, queue_size=50)
 
